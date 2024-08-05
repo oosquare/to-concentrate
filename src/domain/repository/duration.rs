@@ -27,9 +27,9 @@ pub trait DurationRepository: Send + Sync + 'static {
 #[derive(Debug, Snafu)]
 #[non_exhaustive]
 pub enum GetDurationError {
-    #[snafu(whatever, display("an internal error occurred."))]
+    #[snafu(whatever, display("Could not get duration data: {message}"))]
     #[non_exhaustive]
-    Internal {
+    Unknown {
         message: String,
         #[snafu(source(from(Box<dyn StdError>, Some)))]
         source: Option<Box<dyn StdError>>,

@@ -14,7 +14,7 @@ pub trait NotificationRepository: Send + Sync + 'static {
 #[derive(Debug, Snafu)]
 #[non_exhaustive]
 pub enum GetNotificationError {
-    #[snafu(whatever, display("an internal error occurred."))]
+    #[snafu(whatever, display("Could not get message of notification: {message}"))]
     #[non_exhaustive]
     Internal {
         message: String,

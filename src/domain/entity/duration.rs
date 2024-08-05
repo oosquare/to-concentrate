@@ -35,7 +35,7 @@ impl TryFrom<u64> for StageDuration {
 #[derive(Debug, Clone, Snafu, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum TryNewStageDurationError {
-    #[snafu(display("the duration must be greater than zero."))]
+    #[snafu(display("Duration must be greater than zero"))]
     #[non_exhaustive]
     Zero,
 }

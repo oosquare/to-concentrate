@@ -28,10 +28,7 @@ impl From<NotificationMessage> for NotifyRequest {
 #[derive(Debug, Snafu)]
 #[non_exhaustive]
 pub enum NotifyError {
-    #[snafu(
-        whatever,
-        display("An unknown error occurred while making a notification.")
-    )]
+    #[snafu(whatever, display("Could not emit a notification: {message}"))]
     Unknown {
         message: String,
         #[snafu(source(from(Box<dyn StdError>, Some)))]

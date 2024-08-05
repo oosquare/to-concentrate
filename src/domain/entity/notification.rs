@@ -42,7 +42,7 @@ impl From<NotificationMessage> for (String, Option<String>) {
 #[derive(Debug, Clone, Snafu, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum TryNewNotificationMessageError {
-    #[snafu(display("the summary of a notification must be non-empty."))]
+    #[snafu(display("Summary of a notification must be non-empty."))]
     #[non_exhaustive]
     EmptySummary,
 }
