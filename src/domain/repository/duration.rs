@@ -6,6 +6,7 @@ use crate::domain::entity::duration::{StageDuration, TryNewStageDurationError};
 
 /// An abstract interface for accessing duration data.
 #[cfg_attr(test, mockall::automock)]
+#[async_trait::async_trait]
 pub trait DurationRepository: Send + Sync + 'static {
     /// Get duration of the [`Preparation`] stage.
     ///

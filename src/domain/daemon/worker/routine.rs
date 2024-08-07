@@ -79,7 +79,7 @@ impl WorkerRoutine {
 
     /// Main part of its business logic.
     async fn run(&mut self) {
-        loop {
+        while !self.state.is_stopped() {
             self.state.run(&mut self.context).await;
         }
     }

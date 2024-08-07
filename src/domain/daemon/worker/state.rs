@@ -12,18 +12,24 @@ pub struct WorkerState {
 }
 
 impl WorkerState {
+    /// Creates a new [`WorkerState`].
     pub fn new() -> Self {
         Self {
             inner: Some(WorkerStateInner::new()),
         }
     }
 
+    /// Do the business logic based on its inner state.
     pub async fn run(&mut self, context: &mut WorkerContext) {
-        let inner = self
-            .inner
-            .take()
-            .expect("`WorkerState`'s inner should not be `None`");
-        self.inner = Some(inner.run(context).await);
+        self.inner = match self.inner.take() {
+            Some(inner) => Some(inner.run(context).await),
+            None => unreachable!("`WorkerState`'s inner should not be `None`"),
+        };
+    }
+
+    /// Returns `true` if is stopped of this [`WorkerState`].
+    pub fn is_stopped(&self) -> bool {
+        matches!(self.inner, Some(WorkerStateInner::Stopped(_)))
     }
 }
 
@@ -39,6 +45,7 @@ enum WorkerStateInner {
     Ready(ReadyState),
     Running(RunningState),
     Paused(PausedState),
+    Stopped(StoppedState),
 }
 
 impl WorkerStateInner {
@@ -86,6 +93,7 @@ impl StateRun for RunningState {
                 Command::Resume => self.handle_resume(),
                 Command::Skip => self.handle_skip(context).await,
                 Command::Query { responder } => self.handle_query(context, responder),
+                Command::Stop => self.handle_stop(),
             },
             else => self.into(),
         }
@@ -152,6 +160,10 @@ impl RunningState {
 
         self.into()
     }
+
+    fn handle_stop(self) -> WorkerStateInner {
+        StoppedState.into()
+    }
 }
 
 /// A state which indicates that the [`WorkerRoutine`] is paused. The time duration
@@ -169,6 +181,7 @@ impl StateRun for PausedState {
             Some(Command::Resume) => self.handle_resume(context).await,
             Some(Command::Skip) => self.handle_skip(context).await,
             Some(Command::Query { responder }) => self.handle_query(context, responder),
+            Some(Command::Stop) => self.handle_stop(),
             None => self.into(),
         }
     }
@@ -214,6 +227,20 @@ impl PausedState {
             past: self.past,
             stage: self.stage,
         });
+        self.into()
+    }
+
+    fn handle_stop(self) -> WorkerStateInner {
+        StoppedState.into()
+    }
+}
+
+/// A state which indicates that [`WorkerRoutine`] should stop running.
+#[derive(Debug)]
+struct StoppedState;
+
+impl StateRun for StoppedState {
+    async fn run(self, _context: &mut WorkerContext) -> WorkerStateInner {
         self.into()
     }
 }

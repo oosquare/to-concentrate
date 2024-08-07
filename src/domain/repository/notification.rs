@@ -6,6 +6,7 @@ use crate::domain::entity::notification::{NotificationMessage, TryNewNotificatio
 
 /// An abstract interface for accessing an notification's information.
 #[cfg_attr(test, mockall::automock)]
+#[async_trait::async_trait]
 pub trait NotificationRepository: Send + Sync + 'static {
     /// Get the message for post-[`Preparation`] notification.
     ///
