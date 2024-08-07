@@ -54,7 +54,7 @@ struct ReadyState;
 impl StateRun for ReadyState {
     async fn run(self, context: &mut WorkerContext) -> WorkerStateInner {
         let stage = StageState::initial();
-        let duration = context.config.duration(stage).inner().clone();
+        let duration = *context.config.duration(stage).inner();
         let (start, timer) = spawn_timer(duration).await;
 
         RunningState {
@@ -101,7 +101,7 @@ impl RunningState {
         }
 
         let stage = self.stage.next();
-        let duration = context.config.duration(stage).inner().clone();
+        let duration = *context.config.duration(stage).inner();
         let (start, timer) = spawn_timer(duration).await;
 
         RunningState {
@@ -127,7 +127,7 @@ impl RunningState {
 
     async fn handle_skip(self, context: &mut WorkerContext) -> WorkerStateInner {
         let stage = self.stage.next();
-        let duration = context.config.duration(stage).inner().clone();
+        let duration = *context.config.duration(stage).inner();
         let (start, timer) = spawn_timer(duration).await;
 
         RunningState {
@@ -145,7 +145,7 @@ impl RunningState {
         responder: Sender<QueryResponse>,
     ) -> WorkerStateInner {
         let _ = responder.send(QueryResponse {
-            total: context.config.duration(self.stage).inner().clone(),
+            total: *context.config.duration(self.stage).inner(),
             past: self.past,
             stage: self.stage,
         });
@@ -180,7 +180,7 @@ impl PausedState {
     }
 
     async fn handle_resume(self, context: &mut WorkerContext) -> WorkerStateInner {
-        let duration = context.config.duration(self.stage).inner().clone();
+        let duration = *context.config.duration(self.stage).inner();
         let (start, timer) = spawn_timer(duration - self.past).await;
         RunningState {
             start,
@@ -193,7 +193,7 @@ impl PausedState {
 
     async fn handle_skip(self, context: &mut WorkerContext) -> WorkerStateInner {
         let stage = self.stage.next();
-        let duration = context.config.duration(stage).inner().clone();
+        let duration = *context.config.duration(stage).inner();
         let (start, timer) = spawn_timer(duration).await;
         RunningState {
             start,
@@ -210,7 +210,7 @@ impl PausedState {
         responder: Sender<QueryResponse>,
     ) -> WorkerStateInner {
         let _ = responder.send(QueryResponse {
-            total: context.config.duration(self.stage).inner().clone(),
+            total: *context.config.duration(self.stage).inner(),
             past: self.past,
             stage: self.stage,
         });
