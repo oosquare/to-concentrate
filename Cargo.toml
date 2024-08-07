@@ -5,7 +5,9 @@ edition = "2021"
 description = "A tomato clock daemon written in Rust"
 
 [dependencies]
+async-trait = "0.1.81"
+enum_dispatch = "0.3.13"
 mockall = "0.13.0"
 snafu = "0.8.4"
-tokio = { version = "1.39.2", features = ["full", "tracing"] }
+tokio = { version = "1.39.2", features = ["full", "tracing", "test-util"] }
 tracing = "0.1.40"

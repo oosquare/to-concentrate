@@ -1,4 +1,4 @@
-use std::time::Duration;
+use tokio::time::Duration;
 
 /// A public port for suspending the tomato timer.
 pub trait PausePort {

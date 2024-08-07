@@ -10,16 +10,28 @@ pub trait DurationRepository: Send + Sync + 'static {
     /// Get duration of the [`Preparation`] stage.
     ///
     /// [`Preparation`]: crate::domain::entity::state::StageState::Preparation
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if failed to get the duration.
     async fn preparation_duration(&self) -> Result<StageDuration, GetDurationError>;
 
     /// Get duration of the [`Concentration`] stage.
     ///
     /// [`Concentration`]: crate::domain::entity::state::StageState::Concentration
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if failed to get the duration.
     async fn concentration_duration(&self) -> Result<StageDuration, GetDurationError>;
 
     /// Get duration of the [`Relaxation`] stage.
     ///
     /// [`Relaxation`]: crate::domain::entity::state::StageState::Relaxation
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if failed to get the duration.
     async fn relaxation_duration(&self) -> Result<StageDuration, GetDurationError>;
 }
 

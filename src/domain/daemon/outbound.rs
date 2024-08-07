@@ -5,6 +5,7 @@ use snafu::prelude::*;
 use crate::domain::entity::notification::NotificationMessage;
 
 /// A public port for emitting a notification.
+#[async_trait::async_trait]
 pub trait NotifyPort: Send + Sync + 'static {
     /// Do the notification operation. This method is not intended to be
     /// implemented by adapters directly.

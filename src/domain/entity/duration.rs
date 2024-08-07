@@ -1,4 +1,4 @@
-use std::time::Duration;
+use tokio::time::Duration;
 
 use snafu::prelude::*;
 
@@ -18,7 +18,7 @@ impl StageDuration {
     }
 
     /// Returns a reference to the inner of this [`StageDuration`].
-    pub fn inner(&mut self) -> &Duration {
+    pub fn inner(&self) -> &Duration {
         &self.0
     }
 }
