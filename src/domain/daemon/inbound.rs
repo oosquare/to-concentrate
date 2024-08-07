@@ -1,9 +1,15 @@
 use tokio::time::Duration;
 
 /// A public port for suspending the tomato timer.
-pub trait PausePort {
+pub trait PausePort: Send + Sync + 'static {
     /// Do the pause operation.
     async fn pause(&self);
+}
+
+/// A public port for resuming the tomato timer.
+pub trait ResumePort: Send + Sync + 'static {
+    // Do the resume operation.
+    async fn resume(&self);
 }
 
 /// A public port for querying the current state.
