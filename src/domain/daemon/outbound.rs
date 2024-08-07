@@ -6,8 +6,26 @@ use crate::domain::entity::notification::NotificationMessage;
 
 /// A public port for emitting a notification.
 pub trait NotifyPort: Send + Sync + 'static {
-    /// Do the notification operation.
-    async fn notify(&self, request: NotifyRequest) -> Result<(), NotifyError>;
+    /// Do the notification operation. This method is not intended to be
+    /// implemented by adapters directly.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if failed to make a notification.
+    async fn notify(&self, request: &NotificationMessage) -> Result<(), NotifyError> {
+        let request = NotifyRequest {
+            summary: request.summary().to_owned(),
+            body: request.body().map(|body| body.to_owned()),
+        };
+        self.notify_impl(request).await
+    }
+
+    /// Actual implementation of notification operation.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if failed to make a notification.
+    async fn notify_impl(&self, request: NotifyRequest) -> Result<(), NotifyError>;
 }
 
 /// A structure that stores required data.
@@ -15,13 +33,6 @@ pub trait NotifyPort: Send + Sync + 'static {
 pub struct NotifyRequest {
     pub summary: String,
     pub body: Option<String>,
-}
-
-impl From<NotificationMessage> for NotifyRequest {
-    fn from(value: NotificationMessage) -> Self {
-        let (summary, body) = value.into();
-        Self { summary, body }
-    }
 }
 
 /// An error type of the notification operation.
