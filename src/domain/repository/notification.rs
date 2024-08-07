@@ -2,7 +2,7 @@ use std::error::Error as StdError;
 
 use snafu::prelude::*;
 
-use crate::domain::entity::notification::NotificationMessage;
+use crate::domain::entity::notification::{NotificationMessage, TryNewNotificationMessageError};
 
 /// An abstract interface for accessing an notification's information.
 #[cfg_attr(test, mockall::automock)]
@@ -14,9 +14,14 @@ pub trait NotificationRepository: Send + Sync + 'static {
 #[derive(Debug, Snafu)]
 #[non_exhaustive]
 pub enum GetNotificationError {
+    #[snafu(display("Could not create an invalid notification message"))]
+    #[non_exhaustive]
+    Invalid {
+        source: TryNewNotificationMessageError,
+    },
     #[snafu(whatever, display("Could not get message of notification: {message}"))]
     #[non_exhaustive]
-    Internal {
+    Unknown {
         message: String,
         #[snafu(source(from(Box<dyn StdError>, Some)))]
         source: Option<Box<dyn StdError>>,
@@ -26,8 +31,6 @@ pub enum GetNotificationError {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    use crate::domain::entity::notification::NotificationMessage;
 
     #[tokio::test]
     async fn notification_repository_get() {

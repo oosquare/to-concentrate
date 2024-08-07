@@ -2,7 +2,7 @@ use std::error::Error as StdError;
 
 use snafu::prelude::*;
 
-use crate::domain::entity::duration::StageDuration;
+use crate::domain::entity::duration::{StageDuration, TryNewStageDurationError};
 
 /// An abstract interface for accessing duration data.
 #[cfg_attr(test, mockall::automock)]
@@ -27,6 +27,9 @@ pub trait DurationRepository: Send + Sync + 'static {
 #[derive(Debug, Snafu)]
 #[non_exhaustive]
 pub enum GetDurationError {
+    #[snafu(display("Could not create an invalid duration"))]
+    #[non_exhaustive]
+    Invalid { source: TryNewStageDurationError },
     #[snafu(whatever, display("Could not get duration data: {message}"))]
     #[non_exhaustive]
     Unknown {
