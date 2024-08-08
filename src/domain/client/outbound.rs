@@ -6,6 +6,7 @@ use tokio::time::Duration;
 use crate::domain::daemon::inbound::QueryResponse;
 
 /// A public port for launching and initializing a daemon.
+#[async_trait::async_trait]
 pub trait InitPort {
     /// Do the initialization operation.
     ///
