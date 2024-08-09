@@ -1,9 +1,8 @@
 use std::error::Error as StdError;
 
 use snafu::prelude::*;
-use tokio::time::Duration;
 
-use crate::domain::daemon::inbound::QueryResponse;
+pub use crate::domain::daemon::inbound::QueryResponse;
 
 /// A public port for launching and initializing a daemon.
 #[async_trait::async_trait]
