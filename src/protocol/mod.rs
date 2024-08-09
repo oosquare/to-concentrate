@@ -1,5 +1,8 @@
-mod data;
-mod frame;
+pub mod connection;
+pub mod frame;
 
-pub use data::{Request, Response};
-pub use frame::{Frame, ParseFrameError, WriteFrameError};
+mod data;
+
+pub use connection::Connection;
+pub use data::{Protocol, Request, Response};
+pub use frame::Frame;
