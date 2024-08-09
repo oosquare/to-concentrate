@@ -18,6 +18,7 @@ pub trait InitPort {
 
 /// An error type of initializing a daemon.
 #[derive(Debug, Snafu)]
+#[non_exhaustive]
 pub enum InitDaemonError {
     #[snafu(display("Daemon is already running"))]
     AlreadyRunning,
@@ -73,10 +74,10 @@ pub trait SkipPort {
 #[derive(Debug, Snafu)]
 #[non_exhaustive]
 pub enum RequestDaemonError {
-    #[snafu(display("Daemon is unavailable on interface {interface}"))]
-    Unavailable { interface: String },
-    #[snafu(display("Could not receive a response in time"))]
-    Timeout,
+    #[snafu(display("Endpoint {endpoint} is unavailable"))]
+    Unavailable { endpoint: String },
+    #[snafu(display("Could not receive a response: {message}"))]
+    Network { message: String },
     #[snafu(whatever, display("Request failed: {message}"))]
     Unknown {
         message: String,

@@ -43,7 +43,7 @@ pub enum GetDurationError {
     #[snafu(display("Could not create an invalid duration"))]
     #[non_exhaustive]
     Invalid { source: TryNewStageDurationError },
-    #[snafu(whatever, display("Could not get duration data: {message}"))]
+    #[snafu(whatever, display("Load duration failed: {message}"))]
     #[non_exhaustive]
     Unknown {
         message: String,

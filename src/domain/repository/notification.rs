@@ -46,7 +46,7 @@ pub enum GetNotificationError {
     Invalid {
         source: TryNewNotificationMessageError,
     },
-    #[snafu(whatever, display("Could not get message of notification: {message}"))]
+    #[snafu(whatever, display("Load notification message failed: {message}"))]
     #[non_exhaustive]
     Unknown {
         message: String,

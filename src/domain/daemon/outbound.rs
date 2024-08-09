@@ -40,7 +40,7 @@ pub struct NotifyRequest {
 #[derive(Debug, Snafu)]
 #[non_exhaustive]
 pub enum NotifyError {
-    #[snafu(whatever, display("Could not emit a notification: {message}"))]
+    #[snafu(whatever, display("Notification failed: {message}"))]
     Unknown {
         message: String,
         #[snafu(source(from(Box<dyn StdError>, Some)))]

@@ -49,7 +49,9 @@ impl Application {
     }
 }
 
+/// An error for initializing the application.
 #[derive(Debug, Snafu)]
+#[non_exhaustive]
 pub enum InitApplicationError {
     #[snafu(display("Could not spawn a background worker"))]
     Worker { source: SpawnWorkerError },

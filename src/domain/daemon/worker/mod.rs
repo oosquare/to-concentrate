@@ -80,7 +80,9 @@ async fn load_config(
     })
 }
 
+/// An error for spawning the background worker.
 #[derive(Debug, Snafu)]
+#[non_exhaustive]
 pub enum SpawnWorkerError {
     #[snafu(display("Could not load duration configration for {key:?} from repository"))]
     DurationConfig {
