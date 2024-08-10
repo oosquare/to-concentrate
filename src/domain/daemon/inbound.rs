@@ -2,6 +2,7 @@ use tokio::time::Duration;
 
 /// A public port for suspending the tomato timer.
 #[async_trait::async_trait]
+#[cfg_attr(test, mockall::automock)]
 pub trait PausePort: Send + Sync + 'static {
     /// Do the pause operation.
     async fn pause(&self);
@@ -9,6 +10,7 @@ pub trait PausePort: Send + Sync + 'static {
 
 /// A public port for resuming the tomato timer.
 #[async_trait::async_trait]
+#[cfg_attr(test, mockall::automock)]
 pub trait ResumePort: Send + Sync + 'static {
     // Do the resume operation.
     async fn resume(&self);
@@ -16,6 +18,7 @@ pub trait ResumePort: Send + Sync + 'static {
 
 /// A public port for querying the current state.
 #[async_trait::async_trait]
+#[cfg_attr(test, mockall::automock)]
 pub trait QueryPort: Send + Sync + 'static {
     /// Do the query operation.
     async fn query(&self) -> QueryResponse;
@@ -32,6 +35,7 @@ pub struct QueryResponse {
 
 /// A public port for skip the current stage.
 #[async_trait::async_trait]
+#[cfg_attr(test, mockall::automock)]
 pub trait SkipPort: Send + Sync + 'static {
     /// Do the skipping operation.
     async fn skip(&self);

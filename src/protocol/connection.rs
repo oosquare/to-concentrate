@@ -20,15 +20,6 @@ impl<S> Connection<S>
 where
     S: AsyncRead + AsyncWrite + Unpin,
 {
-    /// Creates a new [`Connection<S>`].
-    pub fn new(stream: S) -> Self {
-        Self {
-            stream,
-            buffer: BytesMut::with_capacity(1024),
-            semaphore: Semaphore::new(1),
-        }
-    }
-
     /// Serialize a [`Frame`] to bytes and send it through the wrapped stream.
     ///
     /// # Errors
@@ -85,6 +76,19 @@ where
     }
 }
 
+impl<S> From<S> for Connection<S>
+where
+    S: AsyncRead + AsyncWrite + Unpin,
+{
+    fn from(value: S) -> Self {
+        Self {
+            stream: value,
+            buffer: BytesMut::with_capacity(1024),
+            semaphore: Semaphore::new(1),
+        }
+    }
+}
+
 #[derive(Debug, Snafu)]
 #[snafu(context(suffix(SnafuS)))]
 pub enum SendFrameError {
@@ -103,4 +107,100 @@ pub enum ReceiveFrameError {
     Closed,
     #[snafu(display("Could not receive bytes through inner stream"))]
     Network { source: Error },
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use bytes::BufMut;
+    use tokio::time::Duration;
+
+    use crate::protocol::{Protocol, Response};
+
+    #[tokio::test]
+    async fn connection_send() {
+        let (frame, expected) = new_frame();
+        let (sender, mut receiver) = tokio::io::duplex(1024);
+        let mut connection = Connection::from(sender);
+
+        let handle = tokio::spawn(async move {
+            let mut buffer = Vec::with_capacity(256);
+            receiver.read_to_end(&mut buffer).await.unwrap();
+            assert_eq!(buffer, expected);
+        });
+
+        assert!(connection.send(frame).await.is_ok());
+        drop(connection);
+        handle.await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn connection_receive() {
+        let (expected, buffer) = new_frame();
+        let (mut sender, receiver) = tokio::io::duplex(1024);
+        let mut connection = Connection::from(receiver);
+
+        tokio::spawn(async move {
+            for _ in 0..64 {
+                sender.write_all(&buffer[..]).await.unwrap();
+            }
+        });
+
+        for _ in 0..64 {
+            assert_eq!(connection.receive().await.unwrap(), expected);
+        }
+    }
+
+    #[tokio::test]
+    async fn connection_receive_error_parse() {
+        let (mut sender, receiver) = tokio::io::duplex(1024);
+        let mut connection = Connection::from(receiver);
+
+        tokio::spawn(async move {
+            let mut raw = BytesMut::new();
+            raw.put_u8(b'+');
+            raw.put_u64(8);
+            raw.put_slice(b"whatever");
+            sender.write_all(&raw[..]).await.unwrap();
+        });
+
+        assert!(matches!(
+            connection.receive().await,
+            Err(ReceiveFrameError::Parse {
+                source: ParseFrameError::Deserialization { .. }
+            })
+        ));
+    }
+
+    #[tokio::test]
+    async fn connection_receive_error_closed() {
+        let (expected, buffer) = new_frame();
+        let (mut sender, receiver) = tokio::io::duplex(1024);
+        let mut connection = Connection::from(receiver);
+
+        tokio::spawn(async move {
+            sender.write_all(&buffer[..]).await.unwrap();
+        });
+
+        assert_eq!(connection.receive().await.unwrap(), expected);
+        assert!(matches!(
+            connection.receive().await,
+            Err(ReceiveFrameError::Closed)
+        ));
+    }
+
+    fn new_frame() -> (Frame, BytesMut) {
+        let frame: Frame = Protocol::Response(Response::Query {
+            stage: "Preparation".to_owned(),
+            total: Duration::from_secs(20),
+            remaining: Duration::from_secs(15),
+            past: Duration::from_secs(5),
+        })
+        .into();
+
+        let mut buffer = BytesMut::with_capacity(256);
+        frame.write(&mut buffer).unwrap();
+        (frame, buffer)
+    }
 }
