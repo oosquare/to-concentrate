@@ -3,7 +3,7 @@ use tokio::time::{Duration, Instant, Interval};
 
 use crate::domain::daemon::worker::handle::{Command, QueryResponse};
 use crate::domain::daemon::worker::routine::WorkerContext;
-use crate::domain::entity::state::StageState;
+use crate::domain::entity::StageState;
 
 #[derive(Debug)]
 #[repr(transparent)]
@@ -259,9 +259,9 @@ mod tests {
 
     use tokio::sync::mpsc::Sender;
 
-    use crate::domain::daemon::outbound::{NotifyError, NotifyPort};
-    use crate::domain::daemon::{outbound::NotifyRequest, worker::routine::WorkerConfig};
-    use crate::domain::entity::{duration::StageDuration, notification::NotificationMessage};
+    use crate::domain::daemon::outbound::{NotifyError, NotifyPort, NotifyRequest};
+    use crate::domain::daemon::worker::routine::WorkerConfig;
+    use crate::domain::entity::{NotificationMessage, StageDuration};
 
     #[tokio::test(start_paused = true)]
     async fn timer_operation() {

@@ -3,7 +3,7 @@ use tokio::sync::oneshot::{self, Sender as OneshotSender};
 use tokio::task::JoinHandle;
 use tokio::time::Duration;
 
-use crate::domain::entity::state::StageState;
+use crate::domain::entity::StageState;
 
 /// Result of one query of the current state.
 #[derive(Debug, Clone, PartialEq, Eq)]

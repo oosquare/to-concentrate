@@ -10,7 +10,7 @@ use crate::domain::entity::notification::{NotificationMessage, TryNewNotificatio
 pub trait NotificationRepository: Send + Sync + 'static {
     /// Get the message for post-[`Preparation`] notification.
     ///
-    /// [`Preparation`]: crate::domain::entity::state::StageState::Preparation
+    /// [`Preparation`]: crate::domain::entity::StageState::Preparation
     ///
     /// # Errors
     ///
@@ -19,7 +19,7 @@ pub trait NotificationRepository: Send + Sync + 'static {
 
     /// Get the message for post-[`Concentration`] notification.
     ///
-    /// [`Concentration`]: crate::domain::entity::state::StageState::Concentration
+    /// [`Concentration`]: crate::domain::entity::StageState::Concentration
     ///
     /// # Errors
     ///
@@ -29,7 +29,7 @@ pub trait NotificationRepository: Send + Sync + 'static {
 
     /// Get the message for post-[`Relaxation`] notification.
     ///
-    /// [`Relaxation`]: crate::domain::entity::state::StageState::Relaxation
+    /// [`Relaxation`]: crate::domain::entity::StageState::Relaxation
     ///
     /// # Errors
     ///

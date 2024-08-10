@@ -9,7 +9,7 @@ use std::sync::Arc;
 use snafu::prelude::*;
 
 use crate::domain::daemon::outbound::NotifyPort;
-use crate::domain::entity::state::StageState;
+use crate::domain::entity::StageState;
 use crate::domain::repository::duration::{DurationRepository, GetDurationError};
 use crate::domain::repository::notification::{GetNotificationError, NotificationRepository};
 

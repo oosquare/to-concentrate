@@ -10,7 +10,7 @@ use crate::domain::entity::duration::{StageDuration, TryNewStageDurationError};
 pub trait DurationRepository: Send + Sync + 'static {
     /// Get duration of the [`Preparation`] stage.
     ///
-    /// [`Preparation`]: crate::domain::entity::state::StageState::Preparation
+    /// [`Preparation`]: crate::domain::entity::StageState::Preparation
     ///
     /// # Errors
     ///
@@ -19,7 +19,7 @@ pub trait DurationRepository: Send + Sync + 'static {
 
     /// Get duration of the [`Concentration`] stage.
     ///
-    /// [`Concentration`]: crate::domain::entity::state::StageState::Concentration
+    /// [`Concentration`]: crate::domain::entity::StageState::Concentration
     ///
     /// # Errors
     ///
@@ -28,7 +28,7 @@ pub trait DurationRepository: Send + Sync + 'static {
 
     /// Get duration of the [`Relaxation`] stage.
     ///
-    /// [`Relaxation`]: crate::domain::entity::state::StageState::Relaxation
+    /// [`Relaxation`]: crate::domain::entity::StageState::Relaxation
     ///
     /// # Errors
     ///

@@ -2,7 +2,7 @@ use std::error::Error as StdError;
 
 use snafu::prelude::*;
 
-use crate::domain::entity::notification::NotificationMessage;
+use crate::domain::entity::NotificationMessage;
 
 /// A public port for emitting a notification.
 #[async_trait::async_trait]

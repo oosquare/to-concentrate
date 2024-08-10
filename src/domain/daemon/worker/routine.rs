@@ -6,9 +6,7 @@ use tokio::task::JoinHandle;
 use crate::domain::daemon::outbound::NotifyPort;
 use crate::domain::daemon::worker::handle::Command;
 use crate::domain::daemon::worker::state::WorkerState;
-use crate::domain::entity::duration::StageDuration;
-use crate::domain::entity::notification::NotificationMessage;
-use crate::domain::entity::state::StageState;
+use crate::domain::entity::{NotificationMessage, StageDuration, StageState};
 
 /// A type that stores configurations required by [`WorkerRoutine`]
 /// initialization.
