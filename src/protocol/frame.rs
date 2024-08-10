@@ -50,8 +50,12 @@ impl Frame {
     /// # Errors
     ///
     /// This function will return an error if the serialization fails.
-    pub fn write<B: BufMut>(&self, buf: B) -> Result<(), WriteFrameError> {
-        serde_json::to_writer(buf.writer(), &self.data).context(SerializationSnafu)
+    pub fn write<B: BufMut>(&self, mut buf: B) -> Result<(), WriteFrameError> {
+        let data = serde_json::to_string(&self.data).context(SerializationSnafu)?;
+        buf.put_u8(b'+');
+        buf.put_u64(data.len() as u64);
+        buf.put_slice(data.as_bytes());
+        Ok(())
     }
 }
 
