@@ -23,11 +23,11 @@ impl Application {
     /// # Errors
     ///
     /// This function will return an error if initialization failed.
-    pub async fn init(
+    pub async fn new(
         notify_port: Arc<dyn NotifyPort>,
         duration_repository: Arc<dyn DurationRepository>,
         notification_repository: Arc<dyn NotificationRepository>,
-    ) -> Result<Application, InitApplicationError> {
+    ) -> Result<Application, NewApplicationError> {
         let worker = worker::spawn(duration_repository, notification_repository, notify_port)
             .await
             .context(WorkerSnafu)?;
@@ -52,7 +52,7 @@ impl Application {
 /// An error for initializing the application.
 #[derive(Debug, Snafu)]
 #[non_exhaustive]
-pub enum InitApplicationError {
+pub enum NewApplicationError {
     #[snafu(display("Could not spawn a background worker"))]
     Worker { source: SpawnWorkerError },
 }

@@ -4,4 +4,4 @@ pub mod outbound;
 mod app;
 mod worker;
 
-pub use app::{Application, InitApplicationError};
+pub use app::{Application, NewApplicationError};
