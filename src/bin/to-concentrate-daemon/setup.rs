@@ -1,11 +1,10 @@
 use std::sync::Arc;
 
-use daemonize::Daemonize;
 use snafu::{prelude::*, Whatever};
 use to_concentrate::daemon::config::Configuration;
 use to_concentrate::daemon::outbound::NotifyService;
 use to_concentrate::daemon::repository::{DurationConfiguration, NotificationConfiguration};
-use to_concentrate::daemon::Server;
+use to_concentrate::daemon::{ProcessController, Server};
 use to_concentrate::domain::daemon::ApplicationCore;
 use tokio::net::UnixListener;
 use xdg::BaseDirectories;
@@ -15,7 +14,7 @@ use crate::cli::Arguments;
 const APP_NAME: &str = "to-concentrate";
 
 pub async fn bootstrap(arg: Arguments) -> Result<Server, Whatever> {
-    daemonize(&arg)?;
+    process(&arg)?;
 
     logger()?;
     let configuration = configuration(&arg);
@@ -26,12 +25,10 @@ pub async fn bootstrap(arg: Arguments) -> Result<Server, Whatever> {
     Ok(server)
 }
 
-fn daemonize(arg: &Arguments) -> Result<(), Whatever> {
-    if arg.daemonize {
-        Daemonize::new()
-            .start()
-            .whatever_context("Could not daemonize the process")?;
-    }
+fn process(arg: &Arguments) -> Result<(), Whatever> {
+    ProcessController::new(APP_NAME.to_owned(), arg.daemonize)
+        .start()
+        .whatever_context("Could not prepare process")?;
     Ok(())
 }
 
@@ -57,7 +54,7 @@ fn listener(arg: &Arguments) -> Result<UnixListener, Whatever> {
         None => {
             let base = BaseDirectories::with_prefix(APP_NAME.to_owned())
                 .whatever_context("Could not use XDG runtime directory")?;
-            base.place_runtime_file(&format!("{APP_NAME}-daemon.socket"))
+            base.place_runtime_file("daemon.socket")
                 .whatever_context("Could not create runtime directory")?
         }
     };
