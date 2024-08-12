@@ -1,6 +1,6 @@
+pub mod config;
 pub mod outbound;
+pub mod repository;
 pub mod server;
-
-mod config;
 
 pub use server::Server;

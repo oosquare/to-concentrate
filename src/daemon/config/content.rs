@@ -2,26 +2,26 @@ use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
 pub struct ConfigurationContent {
-    duration: DurationContent,
-    message: NotificationContent,
+    pub duration: DurationContent,
+    pub notification: NotificationContent,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct DurationContent {
-    preparation: u64,
-    concentration: u64,
-    relaxation: u64,
+    pub preparation: u64,
+    pub concentration: u64,
+    pub relaxation: u64,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct NotificationContent {
-    preparation: MessageContent,
-    concentration: MessageContent,
-    relaxation: MessageContent,
+    pub preparation: MessageContent,
+    pub concentration: MessageContent,
+    pub relaxation: MessageContent,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct MessageContent {
-    summary: String,
-    body: Option<String>,
+    pub summary: String,
+    pub body: Option<String>,
 }

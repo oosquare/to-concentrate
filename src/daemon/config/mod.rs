@@ -1,7 +1,7 @@
 mod content;
 mod reader;
 
-pub use content::{ConfigurationContent, DurationContent, MessageContent, NotificationContent};
+pub use content::ConfigurationContent;
 pub use reader::ReadContentError;
 
 use std::path::PathBuf;
@@ -13,8 +13,8 @@ use toml::de::Error as DeError;
 use reader::LazyContentReader;
 
 type LazyConfiguration = Result<ConfigurationContent, LoadConfigurationError>;
-type LazyConfigurationLoader = Box<dyn FnOnce() -> LazyConfiguration>;
-type LazyRefConfiguration<'a> = Result<&'a ConfigurationContent, &'a LoadConfigurationError>;
+type LazyConfigurationLoader = Box<dyn FnOnce() -> LazyConfiguration + Send>;
+type LazyRefConfiguration<'a> = Result<&'a ConfigurationContent, LoadConfigurationError>;
 
 /// In-memory configuration storage with lazy loading.
 pub struct Configuration {
@@ -48,12 +48,13 @@ impl Configuration {
 
     /// Return the configuration. Load it if it hasn't been loaded into memory.
     pub fn get(&self) -> LazyRefConfiguration {
-        self.content.as_ref()
+        self.content.as_ref().map_err(Clone::clone)
     }
 }
 
 /// An error type for loading configuraton from files.
-#[derive(Debug, Snafu)]
+#[derive(Debug, Snafu, Clone)]
+#[non_exhaustive]
 pub enum LoadConfigurationError {
     #[snafu(display("Could not read content from file"))]
     Read { source: ReadContentError },

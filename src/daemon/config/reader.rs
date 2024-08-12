@@ -1,6 +1,7 @@
 use std::fs::File;
 use std::io::{Error as IoError, ErrorKind, Read, Write};
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
 use snafu::prelude::*;
 use xdg::{BaseDirectories, BaseDirectoriesError};
@@ -8,7 +9,7 @@ use xdg::{BaseDirectories, BaseDirectoriesError};
 const DEFAULT_CONTENT: &str = r#"
 "#;
 
-type PathGetter = Box<dyn FnOnce() -> Result<PathBuf, ReadContentError>>;
+type PathGetter = Box<dyn FnOnce() -> Result<PathBuf, ReadContentError> + Send>;
 
 /// A lazy reader which reads the configuration content and creates a default
 /// configuration file if it is missing.
@@ -124,14 +125,22 @@ impl LazyContentReader {
 }
 
 /// An error type for reading content from the configuration file.
-#[derive(Debug, Snafu)]
+#[derive(Debug, Snafu, Clone)]
+#[non_exhaustive]
 pub enum ReadContentError {
     #[snafu(display("Could not open inexistent file {}", path.display()))]
     NotFound { path: PathBuf },
     #[snafu(display("Could not resolve XDG config directory"))]
-    XdgConfig { source: BaseDirectoriesError },
+    XdgConfig {
+        #[snafu(source(from(BaseDirectoriesError, Arc::new)))]
+        source: Arc<BaseDirectoriesError>,
+    },
     #[snafu(display("Could not create default configuration: {when}"))]
-    FileSystem { when: String, source: IoError },
+    FileSystem {
+        when: String,
+        #[snafu(source(from(IoError, Arc::new)))]
+        source: Arc<IoError>,
+    },
 }
 
 #[cfg(test)]
