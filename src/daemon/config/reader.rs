@@ -6,7 +6,29 @@ use std::sync::Arc;
 use snafu::prelude::*;
 use xdg::{BaseDirectories, BaseDirectoriesError};
 
-const DEFAULT_CONTENT: &str = r#"
+pub const DEFAULT_CONTENT: &str = r#"
+# This configuration file is generated automatically. Feel free to do some
+# modification.
+
+# The `duration` section specifies the duration of each stage in seconds.
+[duration]
+preparation = 900
+concentration = 2400
+relaxation = 600
+
+# The `notification.<stage>` section specifies the message shown in desktop
+# notifications. `body` is optional.
+[notification.preparation]
+summary = "Preparation Stage End"
+body = "It's time to start concentrating on learning."
+
+[notification.concentration]
+summary = "Concentration Stage End"
+body = "Well done! Remember to have a rest."
+
+[notification.relaxation]
+summary = "Relaxation Stage End"
+body = "Feel energetic now? Let's continue."
 "#;
 
 type PathGetter = Box<dyn FnOnce() -> Result<PathBuf, ReadContentError> + Send>;
