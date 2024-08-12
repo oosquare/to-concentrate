@@ -6,7 +6,7 @@ use to_concentrate::daemon::config::Configuration;
 use to_concentrate::daemon::outbound::NotifyService;
 use to_concentrate::daemon::repository::{DurationConfiguration, NotificationConfiguration};
 use to_concentrate::daemon::Server;
-use to_concentrate::domain::daemon::Application;
+use to_concentrate::domain::daemon::ApplicationCore;
 use tokio::net::UnixListener;
 use xdg::BaseDirectories;
 
@@ -68,12 +68,12 @@ fn listener(arg: &Arguments) -> Result<UnixListener, Whatever> {
     Ok(socket)
 }
 
-async fn core(config: Arc<Configuration>) -> Result<Application, Whatever> {
+async fn core(config: Arc<Configuration>) -> Result<ApplicationCore, Whatever> {
     let notify_port = Arc::new(NotifyService::new(APP_NAME.to_owned()));
     let duration_repository = Arc::new(DurationConfiguration::new(Arc::clone(&config)));
     let notification_repository = Arc::new(NotificationConfiguration::new(config));
 
-    let core = Application::new(notify_port, duration_repository, notification_repository)
+    let core = ApplicationCore::setup(notify_port, duration_repository, notification_repository)
         .await
         .whatever_context("Could not setup application core")?;
 

@@ -1,4 +1,4 @@
-mod main;
+mod core;
 mod service;
 
-pub use main::{Application, NewApplicationError};
+pub use core::{ApplicationCore, SetupApplicationCoreError};

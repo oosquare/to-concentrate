@@ -5,7 +5,7 @@ use tokio::io::{AsyncRead, AsyncWrite, Error as IoError};
 use tokio::net::UnixListener;
 
 use crate::domain::client::outbound::QueryResponse;
-use crate::domain::daemon::Application;
+use crate::domain::daemon::ApplicationCore;
 use crate::protocol::connection::{ReceiveFrameError, SendFrameError};
 use crate::protocol::{Connection, Protocol, Request, Response};
 
@@ -13,12 +13,12 @@ use crate::protocol::{Connection, Protocol, Request, Response};
 /// requests from clients.
 pub struct Server {
     listener: UnixListener,
-    core: Arc<Application>,
+    core: Arc<ApplicationCore>,
 }
 
 impl Server {
     /// Creates a new [`Server`].
-    pub fn new(listener: UnixListener, core: Application) -> Self {
+    pub fn new(listener: UnixListener, core: ApplicationCore) -> Self {
         Self {
             listener,
             core: Arc::new(core),
@@ -64,7 +64,7 @@ impl Server {
     ///
     /// This function will return an error if handling connection fails.
     async fn handle<S>(
-        core: Arc<Application>,
+        core: Arc<ApplicationCore>,
         mut connection: Connection<S>,
     ) -> Result<(), ServerError>
     where
@@ -189,7 +189,7 @@ mod tests {
         ))
     }
 
-    fn new_core() -> Arc<Application> {
+    fn new_core() -> Arc<ApplicationCore> {
         let mut pause = MockPausePort::new();
         pause
             .expect_pause()
@@ -213,7 +213,7 @@ mod tests {
         let mut skip = MockSkipPort::new();
         skip.expect_skip().returning(|| Box::pin(future::ready(())));
 
-        let core = Application {
+        let core = ApplicationCore {
             pause: Arc::new(pause),
             resume: Arc::new(resume),
             query: Arc::new(query),

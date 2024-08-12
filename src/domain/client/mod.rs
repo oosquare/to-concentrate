@@ -2,4 +2,4 @@ pub mod outbound;
 
 mod app;
 
-pub use app::Application;
+pub use app::ApplicationCore;
