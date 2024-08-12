@@ -3,6 +3,7 @@ use snafu::prelude::*;
 
 use crate::domain::daemon::outbound::{NotifyError, NotifyPort, NotifyRequest};
 
+/// A [`NotifyPort`] implementation based on XDG desktop notification.
 #[derive(Debug, Clone)]
 pub struct NotifyService {
     app_name: String,

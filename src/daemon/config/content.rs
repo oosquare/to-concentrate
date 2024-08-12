@@ -1,5 +1,6 @@
 use serde::Deserialize;
 
+/// Overall configuration structure in memory.
 #[derive(Debug, Deserialize, Clone, PartialEq, Eq)]
 pub struct ConfigurationContent {
     pub duration: DurationContent,
