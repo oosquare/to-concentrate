@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use daemonize::Daemonize;
 use snafu::{prelude::*, Whatever};
 use to_concentrate::daemon::config::Configuration;
 use to_concentrate::daemon::outbound::NotifyService;
@@ -14,6 +15,8 @@ use crate::cli::Arguments;
 const APP_NAME: &str = "to-concentrate";
 
 pub async fn bootstrap(arg: Arguments) -> Result<Server, Whatever> {
+    daemonize(&arg)?;
+
     logger()?;
     let configuration = configuration(&arg);
     let listener = listener(&arg)?;
@@ -21,6 +24,15 @@ pub async fn bootstrap(arg: Arguments) -> Result<Server, Whatever> {
 
     let server = Server::new(listener, core);
     Ok(server)
+}
+
+fn daemonize(arg: &Arguments) -> Result<(), Whatever> {
+    if arg.daemonize {
+        Daemonize::new()
+            .start()
+            .whatever_context("Could not daemonize the process")?;
+    }
+    Ok(())
 }
 
 fn logger() -> Result<(), Whatever> {
@@ -45,7 +57,7 @@ fn listener(arg: &Arguments) -> Result<UnixListener, Whatever> {
         None => {
             let base = BaseDirectories::with_prefix(APP_NAME.to_owned())
                 .whatever_context("Could not use XDG runtime directory")?;
-            base.place_runtime_file(&format!("{APP_NAME}.socket"))
+            base.place_runtime_file(&format!("{APP_NAME}-daemon.socket"))
                 .whatever_context("Could not create runtime directory")?
         }
     };

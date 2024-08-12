@@ -10,4 +10,7 @@ pub struct Arguments {
     /// Path where the daemon creates the UNIX socket
     #[arg(short, long)]
     pub socket: Option<PathBuf>,
+    /// Whether to daemonize the process
+    #[arg(short, long)]
+    pub daemonize: bool,
 }
