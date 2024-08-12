@@ -39,11 +39,10 @@ impl Configuration {
     pub fn with_xdg(app_name: String) -> Self {
         Self::new(LazyContentReader::with_xdg(app_name))
     }
-
-    /// Create a new [`Configuration`] with a custom directory. It will fail
-    /// on providing configurations if the file is not found.
-    pub fn with_custom_dir(custom_dir: PathBuf) -> Self {
-        Self::new(LazyContentReader::with_custom_dir(custom_dir))
+    /// Create a new [`Configuration`] with a custom path. It will fail on
+    /// providing configurations if the file is not found.
+    pub fn with_path(path: PathBuf) -> Self {
+        Self::new(LazyContentReader::with_path(path))
     }
 
     /// Return the configuration. Load it if it hasn't been loaded into memory.

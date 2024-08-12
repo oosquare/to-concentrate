@@ -1,9 +1,9 @@
 use std::fs::File;
-use std::io::{Error as IoError, ErrorKind, Read, Write};
+use std::io::{Error as IoError, ErrorKind, Read, Seek, Write};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use snafu::prelude::*;
+use snafu::{prelude::*, ResultExt};
 use xdg::{BaseDirectories, BaseDirectoriesError};
 
 pub const DEFAULT_CONTENT: &str = r#"
@@ -56,10 +56,10 @@ impl LazyContentReader {
         Self::new(Box::new(path_getter), true)
     }
 
-    /// Create a new [`LazyContentReader`] with a custom directory. Automatic
-    /// file creation is disabled.
-    pub fn with_custom_dir(custom_dir: PathBuf) -> Self {
-        let path_getter = move || Ok(custom_dir);
+    /// Create a new [`LazyContentReader`] with a custom path. Automatic file
+    /// creation is disabled.
+    pub fn with_path(path: PathBuf) -> Self {
+        let path_getter = move || Ok(path);
         Self::new(Box::new(path_getter), false)
     }
 
@@ -133,13 +133,23 @@ impl LazyContentReader {
     ///
     /// This function will return an error if the creation fails.
     fn create_configuration<P: AsRef<Path>>(path: P) -> Result<File, ReadContentError> {
-        let mut file = File::create(path).context(FileSystemSnafu {
-            when: "Creating configuration file",
-        })?;
+        let mut file = File::options()
+            .read(true)
+            .write(true)
+            .create_new(true)
+            .open(path)
+            .context(FileSystemSnafu {
+                when: "Creating configuration file",
+            })?;
 
         file.write_all(DEFAULT_CONTENT.as_bytes())
             .context(FileSystemSnafu {
                 when: "Writing default configuration content",
+            })?;
+
+        file.seek(std::io::SeekFrom::Start(0))
+            .context(FileSystemSnafu {
+                when: "Reseting file cursor position to start",
             })?;
 
         Ok(file)
@@ -180,7 +190,7 @@ mod tests {
         let content = "content for testing";
         file.write_str(&content).unwrap();
 
-        let reader = LazyContentReader::with_custom_dir(file.to_path_buf());
+        let reader = LazyContentReader::with_path(file.to_path_buf());
         assert_eq!(reader.read().unwrap(), content);
     }
 

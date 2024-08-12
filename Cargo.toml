@@ -2,11 +2,12 @@
 name = "to-concentrate"
 version = "0.1.0"
 edition = "2021"
-description = "A tomato clock daemon written in Rust"
+description = "A notifier daemon written in Rust which makes practical use of the tomato clock method"
 
 [dependencies]
 async-trait = "0.1.81"
 bytes = { version = "1.7.1", features = ["serde"] }
+clap = { version = "4.5.15", features = ["derive"] }
 enum_dispatch = "0.3.13"
 mockall = "0.13.0"
 notify-rust = "4.11.1"
@@ -16,6 +17,7 @@ snafu = "0.8.4"
 tokio = { version = "1.39.2", features = ["full", "tracing", "test-util"] }
 toml = "0.8.19"
 tracing = "0.1.40"
+tracing-subscriber = "0.3.18"
 xdg = "2.5.2"
 
 [dev-dependencies]
