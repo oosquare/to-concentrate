@@ -154,7 +154,7 @@ impl RunningState {
     ) -> WorkerStateInner {
         let _ = responder.send(QueryResponse {
             total: *context.config.duration(self.stage).inner(),
-            past: self.past,
+            past: self.past + (Instant::now() - self.start),
             stage: self.stage,
         });
 
