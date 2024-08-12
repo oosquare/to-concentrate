@@ -33,6 +33,17 @@
         in
           mkShell {
             buildInputs = [ rust ];
+            packages = with pkgs; [
+              nil
+              socat
+            ];
+          };
+
+        devShells.ci = let
+          mkShell = pkgs.mkShell.override { stdenv = pkgs.stdenvNoCC; };
+        in
+          mkShell {
+            buildInputs = [ rust ];
           };
       };
     };
