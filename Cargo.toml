@@ -1,5 +1,5 @@
 [package]
-name = "tomatify"
+name = "to-concentrate"
 version = "0.1.0"
 edition = "2021"
 description = "A tomato clock daemon written in Rust"

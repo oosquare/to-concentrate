@@ -1394,7 +1394,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "tomatify"
+name = "to-concentrate"
 version = "0.1.0"
 dependencies = [
  "assert_fs",

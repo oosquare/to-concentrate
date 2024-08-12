@@ -25,8 +25,8 @@
           extensions = [ "rust-analyzer" "rust-src" ]; 
         };
       in {
-        packages.tomatify = pkgs.callPackage ./pkgs/tomatify {};
-        packages.default = self'.packages.tomatify;
+        packages.to-concentrate = pkgs.callPackage ./pkgs/to-concentrate {};
+        packages.default = self'.packages.to-concentrate;
 
         devShells.default = let
           mkShell = pkgs.mkShell.override { stdenv = pkgs.stdenvNoCC; };
