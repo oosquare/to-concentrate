@@ -2,27 +2,27 @@ use serde::Deserialize;
 
 /// Overall configuration structure in memory.
 #[derive(Debug, Deserialize, Clone, PartialEq, Eq)]
-pub struct ConfigurationContent {
-    pub duration: DurationContent,
-    pub notification: NotificationContent,
+pub struct Configuration {
+    pub duration: DurationSection,
+    pub notification: NotificationSection,
 }
 
 #[derive(Debug, Deserialize, Clone, PartialEq, Eq)]
-pub struct DurationContent {
+pub struct DurationSection {
     pub preparation: u64,
     pub concentration: u64,
     pub relaxation: u64,
 }
 
 #[derive(Debug, Deserialize, Clone, PartialEq, Eq)]
-pub struct NotificationContent {
-    pub preparation: MessageContent,
-    pub concentration: MessageContent,
-    pub relaxation: MessageContent,
+pub struct NotificationSection {
+    pub preparation: MessageSection,
+    pub concentration: MessageSection,
+    pub relaxation: MessageSection,
 }
 
 #[derive(Debug, Deserialize, Clone, PartialEq, Eq)]
-pub struct MessageContent {
+pub struct MessageSection {
     pub summary: String,
     pub body: Option<String>,
 }
@@ -35,24 +35,24 @@ mod tests {
 
     #[test]
     fn deserialize_default_content() {
-        let actual: ConfigurationContent = toml::from_str(DEFAULT_CONTENT).unwrap();
+        let actual: Configuration = toml::from_str(DEFAULT_CONTENT).unwrap();
 
-        let expected = ConfigurationContent {
-            duration: DurationContent {
+        let expected = Configuration {
+            duration: DurationSection {
                 preparation: 900,
                 concentration: 2400,
                 relaxation: 600,
             },
-            notification: NotificationContent {
-                preparation: MessageContent {
+            notification: NotificationSection {
+                preparation: MessageSection {
                     summary: "Preparation Stage End".to_owned(),
                     body: Some("It's time to start concentrating on learning.".to_owned()),
                 },
-                concentration: MessageContent {
+                concentration: MessageSection {
                     summary: "Concentration Stage End".to_owned(),
                     body: Some("Well done! Remember to have a rest.".to_owned()),
                 },
-                relaxation: MessageContent {
+                relaxation: MessageSection {
                     summary: "Relaxation Stage End".to_owned(),
                     body: Some("Feel energetic now? Let's continue.".to_owned()),
                 },

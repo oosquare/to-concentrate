@@ -1,62 +1,68 @@
 mod content;
 mod reader;
 
-pub use content::ConfigurationContent;
-pub use reader::ReadContentError;
+use std::path::Path;
 
-use std::path::PathBuf;
-use std::sync::LazyLock;
+pub use content::Configuration;
+pub use reader::ReadContentError;
 
 use snafu::prelude::*;
 use toml::de::Error as DeError;
 
-use reader::LazyContentReader;
+use crate::utils::xdg::{Xdg, XdgBaseKind, XdgError};
 
-type LazyConfiguration = Result<ConfigurationContent, LoadConfigurationError>;
-type LazyConfigurationLoader = Box<dyn FnOnce() -> LazyConfiguration + Send>;
-type LazyRefConfiguration<'a> = Result<&'a ConfigurationContent, LoadConfigurationError>;
-
-/// In-memory configuration storage with lazy loading.
-pub struct Configuration {
-    content: LazyLock<LazyConfiguration, LazyConfigurationLoader>,
-}
-
-impl Configuration {
-    /// Creates a new [`Configuration`].
-    fn new(reader: LazyContentReader) -> Self {
-        let loader = move || {
-            let content = reader.read().context(ReadSnafu)?;
-            let config = toml::from_str(&content).context(ParseSnafu)?;
-            Ok(config)
-        };
-        let loader: LazyConfigurationLoader = Box::new(loader);
-        let content = LazyLock::new(loader);
-        Self { content }
-    }
-
-    /// Creates a new [`Configuration`] with this application's name.
-    /// Afterwards, it'll load configurations from XDG config directory.
-    pub fn with_xdg(app_name: String) -> Self {
-        Self::new(LazyContentReader::with_xdg(app_name))
-    }
-    /// Create a new [`Configuration`] with a custom path. It will fail on
-    /// providing configurations if the file is not found.
-    pub fn with_path(path: PathBuf) -> Self {
-        Self::new(LazyContentReader::with_path(path))
-    }
-
-    /// Return the configuration. Load it if it hasn't been loaded into memory.
-    pub fn get(&self) -> LazyRefConfiguration {
-        self.content.as_ref().map_err(Clone::clone)
-    }
-}
+use reader::ContentReader;
 
 /// An error type for loading configuraton from files.
 #[derive(Debug, Snafu, Clone)]
 #[non_exhaustive]
 pub enum LoadConfigurationError {
+    #[snafu(display("Could not resolve XDG configuration directory"))]
+    XdgConfig { source: XdgError },
     #[snafu(display("Could not read content from file"))]
     Read { source: ReadContentError },
     #[snafu(display("Could not parse invalid configurations"))]
     Parse { source: DeError },
+}
+
+/// Read configuration from given path. Optionally create one from default
+/// template if it doesn't exists.
+///
+/// # Errors
+///
+/// This function will return an error if reading content from file fails or
+/// parsing configuration fails.
+pub fn load<P: AsRef<Path>>(
+    path: P,
+    create_new: bool,
+) -> Result<Configuration, LoadConfigurationError> {
+    let content = ContentReader::new(path.as_ref(), create_new)
+        .read()
+        .context(ReadSnafu)?;
+    toml::from_str(&content).context(ParseSnafu)
+}
+
+/// Read configuration from a custom path. This won't create any new file by
+/// default.
+///
+/// # Errors
+///
+/// This function will return an error if reading content from file fails or
+/// parsing configuration fails.
+pub fn load_with_path<P: AsRef<Path>>(path: P) -> Result<Configuration, LoadConfigurationError> {
+    load(path, false)
+}
+
+/// Read configuration from XDG configuration directory. Create one from default
+/// template if it doesn't exists.
+///
+/// # Errors
+///
+/// This function will return an error if reading content from file fails or
+/// parsing configuration fails.
+pub fn load_with_xdg(app_name: String) -> Result<Configuration, LoadConfigurationError> {
+    let path = Xdg::new(Path::new(&app_name))
+        .and_then(|xdg| xdg.resolve_create(XdgBaseKind::Config, "config.toml"))
+        .context(XdgConfigSnafu)?;
+    load(path, true)
 }

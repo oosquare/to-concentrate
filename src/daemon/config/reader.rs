@@ -5,8 +5,6 @@ use std::sync::Arc;
 
 use snafu::prelude::*;
 
-use crate::utils::xdg::{Xdg, XdgBaseKind, XdgError};
-
 pub const DEFAULT_CONTENT: &str = r#"
 # This configuration file is generated automatically. Feel free to do some
 # modification.
@@ -32,36 +30,20 @@ summary = "Relaxation Stage End"
 body = "Feel energetic now? Let's continue."
 "#;
 
-type PathGetter = Box<dyn FnOnce() -> Result<PathBuf, ReadContentError> + Send>;
-
-/// A lazy reader which reads the configuration content and creates a default
+/// A reader which reads the configuration content and creates a default
 /// configuration file if it is missing.
-pub struct LazyContentReader {
-    path_getter: PathGetter,
+pub struct ContentReader {
+    path: PathBuf,
     create_new: bool,
 }
 
-impl LazyContentReader {
-    /// Creates a new [`LazyContentReader`].
-    fn new(path_getter: PathGetter, create_new: bool) -> Self {
+impl ContentReader {
+    /// Creates a new [`ContentReader`].
+    pub fn new<P: AsRef<Path>>(path: P, create_new: bool) -> Self {
         Self {
-            path_getter,
+            path: path.as_ref().to_path_buf(),
             create_new,
         }
-    }
-
-    /// Create a new [`LazyContentReader`] with this application's name.
-    /// Afterwards, it'll read content from XDG config directory.
-    pub fn with_xdg(app_name: String) -> Self {
-        let path_getter = move || Self::resolve_configuration_path(app_name);
-        Self::new(Box::new(path_getter), true)
-    }
-
-    /// Create a new [`LazyContentReader`] with a custom path. Automatic file
-    /// creation is disabled.
-    pub fn with_path(path: PathBuf) -> Self {
-        let path_getter = move || Ok(path);
-        Self::new(Box::new(path_getter), false)
     }
 
     /// Read content from the file.
@@ -71,29 +53,13 @@ impl LazyContentReader {
     /// This function will return an error if file doesn't exist or it fails to
     /// create a configuration file.
     pub fn read(self) -> Result<String, ReadContentError> {
-        let Self {
-            path_getter,
-            create_new,
-        } = self;
-
-        let mut file = Self::open_configuration(path_getter()?, create_new)?;
+        let Self { path, create_new } = self;
+        let mut file = Self::open_configuration(path, create_new)?;
         let mut content = String::new();
         file.read_to_string(&mut content).context(FileSystemSnafu {
             when: "Reading configuration",
         })?;
         Ok(content)
-    }
-
-    /// Resolve an absolute path to configuration file and try to create its
-    /// leading directory.
-    ///
-    /// # Errors
-    ///
-    /// This function will return an error if the resolution fails.
-    fn resolve_configuration_path(app_name: String) -> Result<PathBuf, ReadContentError> {
-        Xdg::new(Path::new(&app_name))
-            .and_then(|xdg| xdg.resolve_create(XdgBaseKind::Config, "config.toml"))
-            .context(XdgConfigSnafu)
     }
 
     /// Open the configuration file. Create one if specified when it doesn't
@@ -156,8 +122,6 @@ impl LazyContentReader {
 pub enum ReadContentError {
     #[snafu(display("Could not open inexistent file {}", path.display()))]
     NotFound { path: PathBuf },
-    #[snafu(display("Could not resolve XDG configuration directory"))]
-    XdgConfig { source: XdgError },
     #[snafu(display("Could not create default configuration: {when}"))]
     FileSystem {
         when: String,
@@ -181,7 +145,7 @@ mod tests {
         let content = "content for testing";
         file.write_str(&content).unwrap();
 
-        let reader = LazyContentReader::with_path(file.to_path_buf());
+        let reader = ContentReader::new(file.to_path_buf(), false);
         assert_eq!(reader.read().unwrap(), content);
     }
 
@@ -191,7 +155,7 @@ mod tests {
         let file = tmp.child("config.toml");
         file.assert(path_pred::missing());
         assert!(matches!(
-            LazyContentReader::open_configuration(file.to_path_buf(), false),
+            ContentReader::open_configuration(file.to_path_buf(), false),
             Err(ReadContentError::NotFound { .. })
         ));
     }
@@ -201,7 +165,7 @@ mod tests {
         let tmp = TempDir::new().expect("Test environment should support temporary directories");
         let file = tmp.child("config.toml");
         file.assert(path_pred::missing());
-        assert!(LazyContentReader::open_configuration(file.to_path_buf(), true).is_ok());
+        assert!(ContentReader::open_configuration(file.to_path_buf(), true).is_ok());
         file.assert(DEFAULT_CONTENT);
     }
 }

@@ -1,8 +1,8 @@
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use snafu::{prelude::*, Whatever};
-use to_concentrate::daemon::config::Configuration;
+use snafu::{prelude::*, ResultExt, Whatever};
+use to_concentrate::daemon::config::{self, Configuration};
 use to_concentrate::daemon::outbound::NotifyService;
 use to_concentrate::daemon::repository::{DurationConfiguration, NotificationConfiguration};
 use to_concentrate::daemon::runtime::Environment;
@@ -21,7 +21,7 @@ pub struct EnvironmentPath {
 }
 
 pub async fn bootstrap(arg: Arguments) -> Result<Server, Whatever> {
-    let configuration = configuration(&arg);
+    let configuration = configuration(&arg)?;
     let env = environment()?;
     process(&arg, env.pid)?;
 
@@ -86,13 +86,14 @@ fn logger() -> Result<(), Whatever> {
     Ok(())
 }
 
-fn configuration(arg: &Arguments) -> Arc<Configuration> {
-    let configuration = match &arg.config {
-        Some(path) => Configuration::with_path(path.clone()),
-        None => Configuration::with_xdg(APP_NAME.to_owned()),
+fn configuration(arg: &Arguments) -> Result<Arc<Configuration>, Whatever> {
+    let res = match &arg.config {
+        Some(path) => config::load_with_path(path.clone()),
+        None => config::load_with_xdg(APP_NAME.to_owned()),
     };
 
-    Arc::new(configuration)
+    let configuration = res.whatever_context("Could not load configuration")?;
+    Ok(Arc::new(configuration))
 }
 
 fn listener<P: AsRef<Path>>(path: P) -> Result<UnixListener, Whatever> {
