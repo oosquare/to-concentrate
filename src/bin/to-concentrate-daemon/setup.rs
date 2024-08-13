@@ -19,7 +19,7 @@ pub async fn bootstrap(arg: Arguments) -> Result<Server, Whatever> {
 
     logger()?;
     let configuration = configuration(&arg);
-    let listener = listener(&arg)?;
+    let listener = listener()?;
     let core = core(configuration).await?;
 
     let server = Server::new(listener, core);
@@ -49,16 +49,13 @@ fn configuration(arg: &Arguments) -> Arc<Configuration> {
     Arc::new(configuration)
 }
 
-fn listener(arg: &Arguments) -> Result<UnixListener, Whatever> {
-    let socket_path = match &arg.socket {
-        Some(path) => path.clone(),
-        None => Xdg::new(Path::new(APP_NAME))
-            .and_then(|xdg| xdg.resolve(XdgBaseKind::Runtime, "daemon.socket"))
-            .whatever_context("Could not resolve XDG runtime directory")?,
-    };
+fn listener() -> Result<UnixListener, Whatever> {
+    let path = Xdg::new(Path::new(APP_NAME))
+        .and_then(|xdg| xdg.resolve(XdgBaseKind::Runtime, "daemon.socket"))
+        .whatever_context("Could not resolve XDG runtime directory")?;
 
-    let socket = UnixListener::bind(&socket_path)
-        .whatever_context(format!("Could not bind to {}", socket_path.display()))?;
+    let socket = UnixListener::bind(&path)
+        .whatever_context(format!("Could not bind to {}", path.display()))?;
 
     Ok(socket)
 }
