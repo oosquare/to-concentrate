@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use serde::Deserialize;
 
 /// Overall configuration structure in memory.
@@ -5,6 +7,8 @@ use serde::Deserialize;
 pub struct Configuration {
     pub duration: DurationSection,
     pub notification: NotificationSection,
+    #[serde(default)]
+    pub runtime: RuntimeSection,
 }
 
 #[derive(Debug, Deserialize, Clone, PartialEq, Eq)]
@@ -25,6 +29,14 @@ pub struct NotificationSection {
 pub struct MessageSection {
     pub summary: String,
     pub body: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Clone, PartialEq, Eq, Default)]
+pub struct RuntimeSection {
+    #[serde(default)]
+    pub socket: Option<PathBuf>,
+    #[serde(default)]
+    pub pid: Option<PathBuf>,
 }
 
 #[cfg(test)]
@@ -56,6 +68,10 @@ mod tests {
                     summary: "Relaxation Stage End".to_owned(),
                     body: Some("Feel energetic now? Let's continue.".to_owned()),
                 },
+            },
+            runtime: RuntimeSection {
+                socket: None,
+                pid: None,
             },
         };
 

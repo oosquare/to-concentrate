@@ -1,13 +1,14 @@
+use std::cell::LazyCell;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use snafu::{prelude::*, ResultExt, Whatever};
+use snafu::{prelude::*, Whatever};
 use to_concentrate::daemon::config::{self, Configuration};
 use to_concentrate::daemon::outbound::NotifyService;
 use to_concentrate::daemon::repository::{DurationConfiguration, NotificationConfiguration};
-use to_concentrate::daemon::runtime::Environment;
-use to_concentrate::daemon::{ProcessController, Server};
+use to_concentrate::daemon::runtime::{Environment, ProcessController};
+use to_concentrate::daemon::Server;
 use to_concentrate::domain::daemon::ApplicationCore;
 use to_concentrate::utils::xdg::{Xdg, XdgBaseKind};
 use tokio::net::UnixListener;
@@ -22,51 +23,33 @@ pub struct EnvironmentPath {
 }
 
 pub async fn bootstrap(arg: Arguments) -> Result<Server, Whatever> {
-    let configuration = configuration(&arg)?;
-    let env = environment()?;
-    process(&arg, env.pid)?;
+    let (configuration, env_path) = configuration(&arg)?;
+    environment(&env_path)?;
+    process(&arg, env_path.pid)?;
 
     logger()?;
-    let listener = listener(env.socket)?;
+    let listener = listener(env_path.socket)?;
     let core = core(configuration).await?;
 
     let server = Server::new(listener, core);
     Ok(server)
 }
 
-fn environment() -> Result<EnvironmentPath, Whatever> {
-    let xdg = Xdg::new(APP_NAME).whatever_context("Could not use XDG base directories")?;
+fn environment(env_path: &EnvironmentPath) -> Result<(), Whatever> {
+    let socket_parent = env_path.socket.parent().whatever_context(format!(
+        "Invalid socket path: {}",
+        env_path.socket.display()
+    ))?;
+
+    let pid_parent = env_path
+        .pid
+        .parent()
+        .whatever_context(format!("Invalid PID path: {}", env_path.pid.display()))?;
+
     let mut env = Environment::new();
-
-    let socket_path = xdg
-        .resolve(XdgBaseKind::Runtime, "daemon.socket")
-        .whatever_context("Could not use XDG base directories")?;
-
-    let socket_parent = socket_path
-        .parent()
-        .whatever_context(format!("Invalid socket path: {}", socket_path.display()))?;
-
     env.register_directory(socket_parent);
-    env.register_permission(socket_parent, 0o700);
-
-    let pid_path = xdg
-        .resolve(XdgBaseKind::Runtime, "daemon.pid")
-        .whatever_context("Could not use XDG base directories")?;
-
-    let pid_parent = pid_path
-        .parent()
-        .whatever_context(format!("Invalid PID path: {}", pid_path.display()))?;
-
     env.register_directory(pid_parent);
-    env.register_permission(pid_parent, 0o700);
-
-    env.setup()
-        .whatever_context("Could not setup environment")?;
-
-    Ok(EnvironmentPath {
-        socket: socket_path,
-        pid: pid_path,
-    })
+    env.setup().whatever_context("Could not setup environment")
 }
 
 fn process<P: AsRef<Path>>(arg: &Arguments, pid_path: P) -> Result<(), Whatever> {
@@ -84,14 +67,36 @@ fn logger() -> Result<(), Whatever> {
     tracing::subscriber::set_global_default(subscriber).whatever_context("Could not setup logger")
 }
 
-fn configuration(arg: &Arguments) -> Result<Arc<Configuration>, Whatever> {
+fn configuration(arg: &Arguments) -> Result<(Arc<Configuration>, EnvironmentPath), Whatever> {
     let res = match &arg.config {
         Some(path) => config::load_with_path(path.clone()),
         None => config::load_with_xdg(APP_NAME.to_owned()),
     };
 
     let configuration = res.whatever_context("Could not load configuration")?;
-    Ok(Arc::new(configuration))
+
+    let xdg = LazyCell::new(|| Xdg::new(APP_NAME));
+
+    let socket = match &configuration.runtime.socket {
+        Some(socket) => socket.clone(),
+        None => xdg
+            .as_ref()
+            .map_err(Clone::clone)
+            .and_then(|xdg| xdg.resolve(XdgBaseKind::Runtime, "daemon.socket"))
+            .whatever_context("Could not use XDG base directories")?,
+    };
+
+    let pid = match &configuration.runtime.pid {
+        Some(socket) => socket.clone(),
+        None => xdg
+            .as_ref()
+            .map_err(Clone::clone)
+            .and_then(|xdg| xdg.resolve(XdgBaseKind::Runtime, "daemon.pid"))
+            .whatever_context("Could not use XDG base directories")?,
+    };
+
+    let env_path = EnvironmentPath { socket, pid };
+    Ok((Arc::new(configuration), env_path))
 }
 
 fn listener<P: AsRef<Path>>(path: P) -> Result<UnixListener, Whatever> {

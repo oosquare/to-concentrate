@@ -5,4 +5,3 @@ pub mod repository;
 pub mod runtime;
 
 pub use app::Server;
-pub use runtime::ProcessController;

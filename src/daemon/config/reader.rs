@@ -28,6 +28,13 @@ body = "Well done! Remember to have a rest."
 [notification.relaxation]
 summary = "Relaxation Stage End"
 body = "Feel energetic now? Let's continue."
+
+# The `runtime` section specifies the paths to some runtime files. Leave
+# them empty to use default settings. Currently environment variables is not
+# supported.
+# [runtime]
+# socket = "/path/to/unix/socket"
+# runtime = "/path/to/pid/file"
 "#;
 
 /// A reader which reads the configuration content and creates a default
