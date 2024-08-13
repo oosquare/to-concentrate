@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use bytes::{Buf, BufMut};
 use serde_json::Error as SerdeError;
 use snafu::prelude::*;
@@ -72,7 +74,7 @@ impl From<Frame> for Protocol {
 }
 
 /// An error type for parsing a [`Frame`] from bytes.
-#[derive(Debug, Snafu)]
+#[derive(Debug, Snafu, Clone)]
 #[non_exhaustive]
 pub enum ParseFrameError {
     #[snafu(display("Could not parse a frame with incomplete data"))]
@@ -82,15 +84,21 @@ pub enum ParseFrameError {
     #[snafu(display("The content length should be non-zero"))]
     InvalidLength,
     #[snafu(display("Could not deserialize data"))]
-    Deserialization { source: SerdeError },
+    Deserialization {
+        #[snafu(source(from(SerdeError, Arc::new)))]
+        source: Arc<SerdeError>,
+    },
 }
 
 /// An error type for writing a [`Frame`] to bytes.
-#[derive(Debug, Snafu)]
+#[derive(Debug, Snafu, Clone)]
 #[non_exhaustive]
 pub enum WriteFrameError {
     #[snafu(display("Could not serialize frame"))]
-    Serialization { source: SerdeError },
+    Serialization {
+        #[snafu(source(from(SerdeError, Arc::new)))]
+        source: Arc<SerdeError>,
+    },
 }
 
 #[cfg(test)]

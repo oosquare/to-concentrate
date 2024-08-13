@@ -10,6 +10,7 @@ use to_concentrate::daemon::repository::{DurationConfiguration, NotificationConf
 use to_concentrate::daemon::runtime::{Environment, ProcessController};
 use to_concentrate::daemon::Server;
 use to_concentrate::domain::daemon::ApplicationCore;
+use to_concentrate::tracing_report;
 use to_concentrate::utils::xdg::{Xdg, XdgBaseKind};
 use tokio::net::UnixListener;
 
@@ -22,16 +23,31 @@ pub struct EnvironmentPath {
     pid: PathBuf,
 }
 
+#[tracing::instrument(skip(arg))]
 pub async fn bootstrap(arg: Arguments) -> Result<Server, Whatever> {
-    let (configuration, env_path) = configuration(&arg)?;
-    environment(&env_path)?;
-    process(&arg, env_path.pid)?;
+    let (configuration, env_path) = configuration(&arg)
+        .inspect(|_| tracing::info!("Loaded configuration"))
+        .inspect_err(|err| tracing_report!(err))?;
 
-    logger()?;
-    let listener = listener(env_path.socket)?;
-    let core = core(configuration).await?;
+    environment(&env_path)
+        .inspect(|_| tracing::info!("Initialized environment"))
+        .inspect_err(|err| tracing_report!(err))?;
+
+    process(&arg, env_path.pid)
+        .inspect(|_| tracing::info!("Finished process-related operations"))
+        .inspect_err(|err| tracing_report!(err))?;
+
+    let listener = listener(env_path.socket)
+        .inspect(|_| tracing::info!("Initialized socket"))
+        .inspect_err(|err| tracing_report!(err))?;
+
+    let core = core(configuration)
+        .await
+        .inspect(|_| tracing::info!("Initialized server core"))
+        .inspect_err(|err| tracing_report!(err))?;
 
     let server = Server::new(listener, core);
+    tracing::info!("Initialized application");
     Ok(server)
 }
 
@@ -60,11 +76,6 @@ fn process<P: AsRef<Path>>(arg: &Arguments, pid_path: P) -> Result<(), Whatever>
     )
     .start()
     .whatever_context("Could not prepare process")
-}
-
-fn logger() -> Result<(), Whatever> {
-    let subscriber = tracing_subscriber::FmtSubscriber::new();
-    tracing::subscriber::set_global_default(subscriber).whatever_context("Could not setup logger")
 }
 
 fn configuration(arg: &Arguments) -> Result<(Arc<Configuration>, EnvironmentPath), Whatever> {

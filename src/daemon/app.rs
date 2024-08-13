@@ -3,11 +3,13 @@ use std::sync::Arc;
 use snafu::prelude::*;
 use tokio::io::{AsyncRead, AsyncWrite, Error as IoError};
 use tokio::net::UnixListener;
+use tracing::{field::Empty, Instrument, Span};
 
 use crate::domain::client::outbound::QueryResponse;
 use crate::domain::daemon::ApplicationCore;
 use crate::protocol::connection::{ReceiveFrameError, SendFrameError};
 use crate::protocol::{Connection, Protocol, Request, Response};
+use crate::tracing_report;
 
 /// An dedicated server which listens on a UNIX socket and handles
 /// requests from clients.
@@ -31,30 +33,32 @@ impl Server {
     ///
     /// This function will return an error if the server fails to accept
     /// connections or any unexpected error occurs during handling requests.
+    #[tracing::instrument(skip(self))]
     pub async fn serve(&self) -> Result<(), ServerError> {
         loop {
             let (stream, addr) = match self.listener.accept().await {
                 Ok((stream, addr)) => {
-                    tracing::info!(?addr, "Accepted connection from {addr:?}");
+                    tracing::info!(?addr, "Accepted connection");
                     (stream, addr)
                 }
                 Err(err) => {
-                    tracing::error!(?err, "{err}");
+                    tracing_report!(err);
                     return Err(err).context(AcceptSnafu);
                 }
             };
 
             let core = Arc::clone(&self.core);
             let connection = Connection::from(stream);
-            tokio::spawn(async move {
-                if let Err(err) = Self::handle(core, connection).await {
-                    tracing::error!(
-                        ?addr,
-                        ?err,
-                        "Could not handle requests from connection {addr:?}"
-                    );
+
+            let span = tracing::info_span!("handle", ?addr, req = Empty).or_current();
+            tokio::spawn(
+                async move {
+                    if let Err(err) = Self::handle(core, connection).await {
+                        tracing_report!(err, format!("Could not handle requests"));
+                    }
                 }
-            });
+                .instrument(span),
+            );
         }
     }
 
@@ -78,34 +82,48 @@ impl Server {
             Err(err) => return Err(err).context(ReceiveSnafu),
         };
 
+        Span::current().record("req", format!("{request:?}"));
+
         match request {
             Request::Pause => {
+                tracing::info!("Received request");
                 core.pause.pause().await;
+                tracing::info!("Handled request");
                 connection
                     .send(Protocol::Response(Response::Pause).into())
                     .await
                     .context(SendSnafu)
+                    .inspect(|_| tracing::info!("Sent response"))
             }
             Request::Resume => {
+                tracing::info!("Received request");
                 core.resume.resume().await;
+                tracing::info!("Handled request");
                 connection
                     .send(Protocol::Response(Response::Resume).into())
                     .await
                     .context(SendSnafu)
+                    .inspect(|_| tracing::info!("Sent response"))
             }
             Request::Query => {
+                tracing::info!("Received request");
                 let response = core.query.query().await;
+                tracing::info!("Handled request");
                 connection
                     .send(Protocol::Response(response.into()).into())
                     .await
                     .context(SendSnafu)
+                    .inspect(|_| tracing::info!("Sent response"))
             }
             Request::Skip => {
+                tracing::info!("Received request");
                 core.skip.skip().await;
+                tracing::info!("Handled request");
                 connection
                     .send(Protocol::Response(Response::Skip).into())
                     .await
                     .context(SendSnafu)
+                    .inspect(|_| tracing::info!("Sent response"))
             }
         }
     }
@@ -123,11 +141,14 @@ impl From<QueryResponse> for Response {
 }
 
 /// An error type for server.
-#[derive(Debug, Snafu)]
+#[derive(Debug, Snafu, Clone)]
 #[non_exhaustive]
 pub enum ServerError {
     #[snafu(display("Could not accept a connection"))]
-    Accept { source: IoError },
+    Accept {
+        #[snafu(source(from(IoError, Arc::new)))]
+        source: Arc<IoError>,
+    },
     #[snafu(display("Could not receive a request"))]
     Receive { source: ReceiveFrameError },
     #[snafu(display("Could not handle {protocol:?}"))]

@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use bytes::{Buf, BytesMut};
 use snafu::prelude::*;
 use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt, Error};
@@ -89,16 +91,19 @@ where
     }
 }
 
-#[derive(Debug, Snafu)]
+#[derive(Debug, Snafu, Clone)]
 #[snafu(context(suffix(SnafuS)))]
 pub enum SendFrameError {
     #[snafu(display("Could not write frame to buffer"))]
     Write { source: WriteFrameError },
     #[snafu(display("Could not send bytes through inner stream"))]
-    Network { source: Error },
+    Network {
+        #[snafu(source(from(Error, Arc::new)))]
+        source: Arc<Error>,
+    },
 }
 
-#[derive(Debug, Snafu)]
+#[derive(Debug, Snafu, Clone)]
 #[snafu(context(suffix(SnafuR)))]
 pub enum ReceiveFrameError {
     #[snafu(display("Could not parse frame from buffer"))]
@@ -106,7 +111,10 @@ pub enum ReceiveFrameError {
     #[snafu(display("Connection is closed by the peer"))]
     Closed,
     #[snafu(display("Could not receive bytes through inner stream"))]
-    Network { source: Error },
+    Network {
+        #[snafu(source(from(Error, Arc::new)))]
+        source: Arc<Error>,
+    },
 }
 
 #[cfg(test)]
