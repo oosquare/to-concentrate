@@ -1,3 +1,4 @@
+use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -75,15 +76,12 @@ fn process<P: AsRef<Path>>(arg: &Arguments, pid_path: P) -> Result<(), Whatever>
         arg.daemonize,
     )
     .start()
-    .whatever_context("Could not prepare process")?;
-    Ok(())
+    .whatever_context("Could not prepare process")
 }
 
 fn logger() -> Result<(), Whatever> {
     let subscriber = tracing_subscriber::FmtSubscriber::new();
-    tracing::subscriber::set_global_default(subscriber)
-        .whatever_context("Could not setup logger")?;
-    Ok(())
+    tracing::subscriber::set_global_default(subscriber).whatever_context("Could not setup logger")
 }
 
 fn configuration(arg: &Arguments) -> Result<Arc<Configuration>, Whatever> {
@@ -97,10 +95,9 @@ fn configuration(arg: &Arguments) -> Result<Arc<Configuration>, Whatever> {
 }
 
 fn listener<P: AsRef<Path>>(path: P) -> Result<UnixListener, Whatever> {
-    let socket = UnixListener::bind(&path)
-        .whatever_context(format!("Could not bind to {}", path.as_ref().display()))?;
-
-    Ok(socket)
+    let _ = fs::remove_file(&path);
+    UnixListener::bind(&path)
+        .whatever_context(format!("Could not bind to {}", path.as_ref().display()))
 }
 
 async fn core(config: Arc<Configuration>) -> Result<ApplicationCore, Whatever> {
@@ -108,9 +105,7 @@ async fn core(config: Arc<Configuration>) -> Result<ApplicationCore, Whatever> {
     let duration_repository = Arc::new(DurationConfiguration::new(Arc::clone(&config)));
     let notification_repository = Arc::new(NotificationConfiguration::new(config));
 
-    let core = ApplicationCore::setup(notify_port, duration_repository, notification_repository)
+    ApplicationCore::setup(notify_port, duration_repository, notification_repository)
         .await
-        .whatever_context("Could not setup application core")?;
-
-    Ok(core)
+        .whatever_context("Could not setup application core")
 }
