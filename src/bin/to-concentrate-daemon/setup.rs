@@ -1,3 +1,4 @@
+use std::path::Path;
 use std::sync::Arc;
 
 use snafu::{prelude::*, Whatever};
@@ -6,8 +7,8 @@ use to_concentrate::daemon::outbound::NotifyService;
 use to_concentrate::daemon::repository::{DurationConfiguration, NotificationConfiguration};
 use to_concentrate::daemon::{ProcessController, Server};
 use to_concentrate::domain::daemon::ApplicationCore;
+use to_concentrate::utils::xdg::{Xdg, XdgBaseKind};
 use tokio::net::UnixListener;
-use xdg::BaseDirectories;
 
 use crate::cli::Arguments;
 
@@ -51,12 +52,9 @@ fn configuration(arg: &Arguments) -> Arc<Configuration> {
 fn listener(arg: &Arguments) -> Result<UnixListener, Whatever> {
     let socket_path = match &arg.socket {
         Some(path) => path.clone(),
-        None => {
-            let base = BaseDirectories::with_prefix(APP_NAME.to_owned())
-                .whatever_context("Could not use XDG runtime directory")?;
-            base.place_runtime_file("daemon.socket")
-                .whatever_context("Could not create runtime directory")?
-        }
+        None => Xdg::new(Path::new(APP_NAME))
+            .and_then(|xdg| xdg.resolve(XdgBaseKind::Runtime, "daemon.socket"))
+            .whatever_context("Could not resolve XDG runtime directory")?,
     };
 
     let socket = UnixListener::bind(&socket_path)

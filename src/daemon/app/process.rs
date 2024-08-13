@@ -4,9 +4,10 @@ use std::path::Path;
 use std::sync::Arc;
 
 use daemonize::{Daemonize, Error as DaemonizeError};
-use snafu::{prelude::*, ResultExt};
+use snafu::prelude::*;
 use sysinfo::{Pid, System};
-use xdg::{BaseDirectories, BaseDirectoriesError};
+
+use crate::utils::xdg::{Xdg, XdgBaseKind, XdgError};
 
 /// A process manager responsible for daemonization and preventing multiple
 /// running instance.
@@ -32,13 +33,9 @@ impl ProcessController {
     ///
     /// This function will return an error if the preapration fails.
     pub fn start(self) -> Result<(), ControlProcessError> {
-        let prefix = Path::new(&self.app_name);
-        let base = BaseDirectories::with_prefix(prefix).context(XdgRuntimeSnafu)?;
-        let pid_file = base
-            .place_runtime_file("daemon.pid")
-            .context(FileSystemSnafu {
-                message: "Could not create XDG runtime directory",
-            })?;
+        let pid_file = Xdg::new(Path::new(&self.app_name))
+            .and_then(|xdg| xdg.resolve(XdgBaseKind::Runtime, "daemon.pid"))
+            .context(XdgRuntimeSnafu)?;
 
         let system = System::new_all();
         Self::detect_instance(&system, pid_file.as_path(), &self.app_name)?;
@@ -111,10 +108,7 @@ impl ProcessController {
 #[non_exhaustive]
 pub enum ControlProcessError {
     #[snafu(display("Could not resolve XDG runtime directory"))]
-    XdgRuntime {
-        #[snafu(source(from(BaseDirectoriesError, Arc::new)))]
-        source: Arc<BaseDirectoriesError>,
-    },
+    XdgRuntime { source: XdgError },
     #[snafu(display("File system error: {message}"))]
     FileSystem {
         message: String,

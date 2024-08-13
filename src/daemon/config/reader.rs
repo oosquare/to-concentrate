@@ -3,8 +3,9 @@ use std::io::{Error as IoError, ErrorKind, Read, Seek, Write};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use snafu::{prelude::*, ResultExt};
-use xdg::{BaseDirectories, BaseDirectoriesError};
+use snafu::prelude::*;
+
+use crate::utils::xdg::{Xdg, XdgBaseKind, XdgError};
 
 pub const DEFAULT_CONTENT: &str = r#"
 # This configuration file is generated automatically. Feel free to do some
@@ -90,16 +91,9 @@ impl LazyContentReader {
     ///
     /// This function will return an error if the resolution fails.
     fn resolve_configuration_path(app_name: String) -> Result<PathBuf, ReadContentError> {
-        let prefix = PathBuf::from(app_name).to_path_buf();
-
-        let path = BaseDirectories::with_prefix(prefix)
-            .context(XdgConfigSnafu)?
-            .place_config_file("config.toml")
-            .context(FileSystemSnafu {
-                when: "Creating XDG config directory",
-            })?;
-
-        Ok(path)
+        Xdg::new(Path::new(&app_name))
+            .and_then(|xdg| xdg.resolve(XdgBaseKind::Config, "config.toml"))
+            .context(XdgConfigSnafu)
     }
 
     /// Open the configuration file. Create one if specified when it doesn't
@@ -120,7 +114,7 @@ impl LazyContentReader {
                         NotFoundSnafu { path }.fail()
                     }
                 }
-                _ => Err(err.into()).context(FileSystemSnafu {
+                _ => Err(err).context(FileSystemSnafu {
                     when: "Opening configuration file",
                 }),
             },
@@ -162,11 +156,8 @@ impl LazyContentReader {
 pub enum ReadContentError {
     #[snafu(display("Could not open inexistent file {}", path.display()))]
     NotFound { path: PathBuf },
-    #[snafu(display("Could not resolve XDG config directory"))]
-    XdgConfig {
-        #[snafu(source(from(BaseDirectoriesError, Arc::new)))]
-        source: Arc<BaseDirectoriesError>,
-    },
+    #[snafu(display("Could not resolve XDG configuration directory"))]
+    XdgConfig { source: XdgError },
     #[snafu(display("Could not create default configuration: {when}"))]
     FileSystem {
         when: String,

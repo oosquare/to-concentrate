@@ -2,3 +2,4 @@
 pub mod daemon;
 pub mod domain;
 pub mod protocol;
+pub mod utils;
