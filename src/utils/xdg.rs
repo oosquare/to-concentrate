@@ -23,13 +23,32 @@ impl Xdg {
         Ok(Self { base })
     }
 
+    /// Resolve the absolute path for the file.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if XDG runtime directory is not
+    /// available when resolving it.
+    pub fn resolve<P: AsRef<Path>>(&self, kind: XdgBaseKind, file: P) -> Result<PathBuf, XdgError> {
+        match kind {
+            XdgBaseKind::Config => Ok(self.base.get_config_file(file)),
+            XdgBaseKind::Runtime => self.base.get_runtime_file(file).context(FileSystemSnafu {
+                message: "XDG runtime directory is not available",
+            }),
+        }
+    }
+
     /// Resolve the absolute path for the file and create the leading
     /// directories if they didn't exist before.
     ///
     /// # Errors
     ///
     /// This function will return an error if creating directories fails.
-    pub fn resolve<P: AsRef<Path>>(&self, kind: XdgBaseKind, file: P) -> Result<PathBuf, XdgError> {
+    pub fn resolve_create<P: AsRef<Path>>(
+        &self,
+        kind: XdgBaseKind,
+        file: P,
+    ) -> Result<PathBuf, XdgError> {
         let res = match kind {
             XdgBaseKind::Config => self.base.place_config_file(file),
             XdgBaseKind::Runtime => self.base.place_runtime_file(file),

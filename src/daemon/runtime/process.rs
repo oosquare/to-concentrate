@@ -1,27 +1,27 @@
 use std::fs::File;
 use std::io::{Error as IoError, ErrorKind as IoErrorKind, Read, Write};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use daemonize::{Daemonize, Error as DaemonizeError};
 use snafu::prelude::*;
 use sysinfo::{Pid, System};
 
-use crate::utils::xdg::{Xdg, XdgBaseKind, XdgError};
-
 /// A process manager responsible for daemonization and preventing multiple
 /// running instance.
 #[derive(Debug)]
 pub struct ProcessController {
     app_name: String,
+    pid_file: PathBuf,
     daemonize: bool,
 }
 
 impl ProcessController {
     /// Creates a new [`ProcessController`].
-    pub fn new(app_name: String, daemonize: bool) -> Self {
+    pub fn new(app_name: String, pid_file: PathBuf, daemonize: bool) -> Self {
         Self {
             app_name,
+            pid_file,
             daemonize,
         }
     }
@@ -33,22 +33,18 @@ impl ProcessController {
     ///
     /// This function will return an error if the preapration fails.
     pub fn start(self) -> Result<(), ControlProcessError> {
-        let pid_file = Xdg::new(Path::new(&self.app_name))
-            .and_then(|xdg| xdg.resolve(XdgBaseKind::Runtime, "daemon.pid"))
-            .context(XdgRuntimeSnafu)?;
-
         let system = System::new_all();
-        Self::detect_instance(&system, pid_file.as_path(), &self.app_name)?;
+        Self::detect_instance(&system, &self.pid_file, &self.app_name)?;
 
         if self.daemonize {
             Daemonize::new()
-                .pid_file(pid_file)
+                .pid_file(&self.pid_file)
                 .start()
                 .context(DaemonizeSnafu)?;
         } else {
             let pid =
                 sysinfo::get_current_pid().map_err(|err| GetPidSnafu { message: err }.build())?;
-            Self::write_pid(pid_file, pid)?;
+            Self::write_pid(&self.pid_file, pid)?;
         }
 
         Ok(())
@@ -107,8 +103,6 @@ impl ProcessController {
 #[derive(Debug, Snafu, Clone)]
 #[non_exhaustive]
 pub enum ControlProcessError {
-    #[snafu(display("Could not resolve XDG runtime directory"))]
-    XdgRuntime { source: XdgError },
     #[snafu(display("File system error: {message}"))]
     FileSystem {
         message: String,

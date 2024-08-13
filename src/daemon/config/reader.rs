@@ -92,7 +92,7 @@ impl LazyContentReader {
     /// This function will return an error if the resolution fails.
     fn resolve_configuration_path(app_name: String) -> Result<PathBuf, ReadContentError> {
         Xdg::new(Path::new(&app_name))
-            .and_then(|xdg| xdg.resolve(XdgBaseKind::Config, "config.toml"))
+            .and_then(|xdg| xdg.resolve_create(XdgBaseKind::Config, "config.toml"))
             .context(XdgConfigSnafu)
     }
 
