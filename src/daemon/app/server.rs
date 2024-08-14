@@ -1,8 +1,6 @@
 use std::sync::Arc;
 
 use snafu::prelude::*;
-use tokio::io::Error as IoError;
-use tokio::net::UnixListener;
 use tracing::{field::Empty, Instrument, Span};
 
 use crate::domain::client::outbound::QueryResponse;
@@ -12,16 +10,18 @@ use crate::protocol::{Connection, Protocol, Request, Response};
 use crate::tracing_report;
 use crate::utils::stream::Stream;
 
+use super::listener::{ListenError, Listener};
+
 /// An dedicated server which listens on a UNIX socket and handles
 /// requests from clients.
 pub struct Server {
-    listener: UnixListener,
+    listener: Box<dyn Listener>,
     core: Arc<ApplicationCore>,
 }
 
 impl Server {
     /// Creates a new [`Server`].
-    pub fn new(listener: UnixListener, core: ApplicationCore) -> Self {
+    pub fn new(listener: Box<dyn Listener>, core: ApplicationCore) -> Self {
         Self {
             listener,
             core: Arc::new(core),
@@ -37,21 +37,21 @@ impl Server {
     #[tracing::instrument(skip(self))]
     pub async fn serve(&self) -> Result<(), ServerError> {
         loop {
-            let (stream, addr) = match self.listener.accept().await {
-                Ok((stream, addr)) => {
-                    tracing::info!(?addr, "Accepted connection");
-                    (stream, addr)
+            let stream = match self.listener.accept().await {
+                Ok(stream) => {
+                    tracing::info!("Accepted connection");
+                    stream
                 }
                 Err(err) => {
                     tracing_report!(err);
-                    return Err(err).context(AcceptSnafu);
+                    return Err(err).context(ListenSnafu);
                 }
             };
 
             let core = Arc::clone(&self.core);
             let connection = Connection::from(stream);
 
-            let span = tracing::info_span!("handle", ?addr, req = Empty).or_current();
+            let span = tracing::info_span!("handle", req = Empty).or_current();
             tokio::spawn(
                 async move {
                     if let Err(err) = Self::handle(core, connection).await {
@@ -143,10 +143,7 @@ impl From<QueryResponse> for Response {
 #[non_exhaustive]
 pub enum ServerError {
     #[snafu(display("Could not accept a connection"))]
-    Accept {
-        #[snafu(source(from(IoError, Arc::new)))]
-        source: Arc<IoError>,
-    },
+    Listen { source: ListenError },
     #[snafu(display("Could not receive a request"))]
     Receive { source: ReceiveFrameError },
     #[snafu(display("Could not handle {protocol:?}"))]

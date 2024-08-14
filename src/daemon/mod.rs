@@ -4,4 +4,4 @@ pub mod outbound;
 pub mod repository;
 pub mod runtime;
 
-pub use app::Server;
+pub use app::{Server, UnixListener};

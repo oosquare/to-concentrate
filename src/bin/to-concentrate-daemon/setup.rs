@@ -4,15 +4,15 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use snafu::{prelude::*, Whatever};
+use to_concentrate::daemon::app::listener::Listener;
 use to_concentrate::daemon::config::{self, Configuration};
 use to_concentrate::daemon::outbound::NotifyService;
 use to_concentrate::daemon::repository::{DurationConfiguration, NotificationConfiguration};
 use to_concentrate::daemon::runtime::{Environment, ProcessController};
-use to_concentrate::daemon::Server;
+use to_concentrate::daemon::{Server, UnixListener};
 use to_concentrate::domain::daemon::ApplicationCore;
 use to_concentrate::tracing_report;
 use to_concentrate::utils::xdg::{Xdg, XdgBaseKind};
-use tokio::net::UnixListener;
 
 use crate::cli::Arguments;
 
@@ -110,9 +110,10 @@ fn configuration(arg: &Arguments) -> Result<(Arc<Configuration>, EnvironmentPath
     Ok((Arc::new(configuration), env_path))
 }
 
-fn listener<P: AsRef<Path>>(path: P) -> Result<UnixListener, Whatever> {
+fn listener<P: AsRef<Path>>(path: P) -> Result<Box<dyn Listener>, Whatever> {
     let _ = fs::remove_file(&path);
-    UnixListener::bind(&path)
+    UnixListener::new(&path)
+        .map(|listener| -> Box<dyn Listener> { Box::new(listener) })
         .whatever_context(format!("Could not bind to {}", path.as_ref().display()))
 }
 
