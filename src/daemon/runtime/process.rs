@@ -50,7 +50,7 @@ impl ProcessController {
         Ok(())
     }
 
-    fn detect_instance<P: AsRef<Path>>(
+    pub fn detect_instance<P: AsRef<Path>>(
         system: &System,
         pid_file: P,
         app_name: &str,
