@@ -73,11 +73,12 @@ pub trait SkipPort {
 /// An error type of sending requests to daemon.
 #[derive(Debug, Snafu)]
 #[non_exhaustive]
+#[snafu(visibility(pub))]
 pub enum RequestDaemonError {
     #[snafu(display("Endpoint {endpoint} is unavailable"))]
     Unavailable { endpoint: String },
-    #[snafu(display("Could not receive a response: {message}"))]
-    Network { message: String },
+    #[snafu(display("Could not receive a valid response"))]
+    BadResponse,
     #[snafu(whatever, display("Request failed: {message}"))]
     Unknown {
         message: String,
