@@ -2,26 +2,21 @@ use std::sync::Arc;
 
 use bytes::{Buf, BytesMut};
 use snafu::prelude::*;
-use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt, Error};
+use tokio::io::{AsyncReadExt, AsyncWriteExt, Error};
 use tokio::sync::Semaphore;
 
 use crate::protocol::frame::{Frame, ParseFrameError, WriteFrameError};
+use crate::utils::stream::Stream;
 
 /// A wrapper of a stream (typically a socket), which handles sending and
 /// receiving frames through the stream.
-pub struct Connection<S>
-where
-    S: AsyncRead + AsyncWrite + Unpin,
-{
+pub struct Connection<S: Stream> {
     stream: S,
     buffer: BytesMut,
     semaphore: Semaphore,
 }
 
-impl<S> Connection<S>
-where
-    S: AsyncRead + AsyncWrite + Unpin,
-{
+impl<S: Stream> Connection<S> {
     /// Serialize a [`Frame`] to bytes and send it through the wrapped stream.
     ///
     /// # Errors
@@ -78,10 +73,7 @@ where
     }
 }
 
-impl<S> From<S> for Connection<S>
-where
-    S: AsyncRead + AsyncWrite + Unpin,
-{
+impl<S: Stream> From<S> for Connection<S> {
     fn from(value: S) -> Self {
         Self {
             stream: value,

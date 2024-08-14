@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use snafu::prelude::*;
-use tokio::io::{AsyncRead, AsyncWrite, Error as IoError};
+use tokio::io::Error as IoError;
 use tokio::net::UnixListener;
 use tracing::{field::Empty, Instrument, Span};
 
@@ -10,6 +10,7 @@ use crate::domain::daemon::ApplicationCore;
 use crate::protocol::connection::{ReceiveFrameError, SendFrameError};
 use crate::protocol::{Connection, Protocol, Request, Response};
 use crate::tracing_report;
+use crate::utils::stream::Stream;
 
 /// An dedicated server which listens on a UNIX socket and handles
 /// requests from clients.
@@ -67,13 +68,10 @@ impl Server {
     /// # Errors
     ///
     /// This function will return an error if handling connection fails.
-    async fn handle<S>(
+    async fn handle<S: Stream>(
         core: Arc<ApplicationCore>,
         mut connection: Connection<S>,
-    ) -> Result<(), ServerError>
-    where
-        S: AsyncRead + AsyncWrite + Unpin,
-    {
+    ) -> Result<(), ServerError> {
         let request = match connection.receive().await {
             Ok(frame) => match Protocol::from(frame) {
                 Protocol::Request(request) => request,
