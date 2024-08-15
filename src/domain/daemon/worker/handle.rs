@@ -1,6 +1,5 @@
 use tokio::sync::mpsc::Sender;
 use tokio::sync::oneshot::{self, Sender as OneshotSender};
-use tokio::task::JoinHandle;
 use tokio::time::Duration;
 
 use crate::domain::entity::StageState;
@@ -22,20 +21,18 @@ pub enum Command {
     Query {
         responder: OneshotSender<QueryResponse>,
     },
-    Stop,
 }
 
 /// Handle that controls a [`WorkerRoutine`].
 #[derive(Debug)]
 pub struct WorkerHandle {
     requester: Sender<Command>,
-    handle: JoinHandle<()>,
 }
 
 impl WorkerHandle {
     /// Creates a new [`WorkerHandle`].
-    pub fn new(requester: Sender<Command>, handle: JoinHandle<()>) -> Self {
-        Self { requester, handle }
+    pub fn new(requester: Sender<Command>) -> Self {
+        Self { requester }
     }
 
     /// Send [`Command::Pause`] to the background worker and pause the timer.
@@ -74,17 +71,5 @@ impl WorkerHandle {
             },
             Err(_) => unreachable!("Worker should not be shutted down"),
         }
-    }
-
-    /// Stop the background worker and drop the handle.
-    pub async fn stop(self) {
-        match self.requester.send(Command::Stop).await {
-            Ok(_) => {}
-            Err(_) => unreachable!("Worker should not be shutted down"),
-        };
-        match self.handle.await {
-            Ok(_) => tracing::info!("`WorkerRoutine` was shutted down"),
-            Err(err) => tracing::error!(%err, "`WorkerRoutine` failed to join"),
-        };
     }
 }

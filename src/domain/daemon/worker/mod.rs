@@ -22,8 +22,8 @@ pub async fn spawn(
 ) -> Result<WorkerHandle, SpawnWorkerError> {
     let (requester, commands) = tokio::sync::mpsc::channel(1);
     let config = load_config(duration_repository, notification_repository).await?;
-    let handle = WorkerRoutine::spawn(config, commands, notifier);
-    Ok(WorkerHandle::new(requester, handle))
+    WorkerRoutine::spawn(config, commands, notifier);
+    Ok(WorkerHandle::new(requester))
 }
 
 async fn load_config(
