@@ -130,6 +130,7 @@ impl Server {
 impl From<QueryResponse> for Response {
     fn from(value: QueryResponse) -> Self {
         Response::Query {
+            current: value.current,
             stage: value.stage,
             total: value.total,
             remaining: value.remaining,
@@ -173,6 +174,7 @@ mod tests {
         assert_eq!(
             client.receive().await.unwrap(),
             Protocol::Response(Response::Query {
+                current: "Running".to_owned(),
                 stage: "Preparation".to_owned(),
                 total: Duration::from_secs(20),
                 remaining: Duration::from_secs(15),
@@ -219,6 +221,7 @@ mod tests {
         let mut query = MockQueryPort::new();
         query.expect_query().returning(|| {
             Box::pin(future::ready(QueryResponse {
+                current: "Running".to_owned(),
                 stage: "Preparation".to_owned(),
                 total: Duration::from_secs(20),
                 remaining: Duration::from_secs(15),

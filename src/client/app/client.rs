@@ -69,8 +69,13 @@ impl Client {
     /// valid response.
     async fn query(&self, args: QueryArguments) -> Result<(), ClientError> {
         let response = self.core.query.query().await.context(RequestSnafu)?;
-        let enable_all = !args.stage && !args.total && !args.remaining && !args.past;
+        let enable_all =
+            !args.current && !args.stage && !args.total && !args.remaining && !args.past;
         let mut outputs = Vec::new();
+
+        if enable_all || args.current {
+            outputs.push(("Current".to_owned(), response.current));
+        }
 
         if enable_all || args.stage {
             outputs.push(("Stage".to_owned(), response.stage));

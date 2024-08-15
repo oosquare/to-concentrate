@@ -47,11 +47,13 @@ impl QueryPort for QueryService {
 
         match response {
             Protocol::Response(Response::Query {
+                current,
                 stage,
                 total,
                 remaining,
                 past,
             }) => Ok(QueryResponse {
+                current,
                 stage,
                 total,
                 remaining,
@@ -78,6 +80,7 @@ mod tests {
             let server = server.recv().await.unwrap();
             let mut connection = Connection::from(server);
             let response = Protocol::Response(Response::Query {
+                current: "Running".to_owned(),
                 stage: "Preparation".to_owned(),
                 total: Duration::from_secs(20),
                 remaining: Duration::from_secs(15),
@@ -88,6 +91,7 @@ mod tests {
 
         let service = QueryService::new(Arc::new(connector));
         let response = service.query().await.unwrap();
+        assert_eq!(response.current, "Running");
         assert_eq!(response.stage, "Preparation");
         assert_eq!(response.total.as_secs(), 20);
         assert_eq!(response.remaining.as_secs(), 15);

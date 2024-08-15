@@ -7,6 +7,7 @@ use crate::domain::entity::StageState;
 /// Result of one query of the current state.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct QueryResponse {
+    pub current: String,
     pub total: Duration,
     pub past: Duration,
     pub stage: StageState,

@@ -73,6 +73,7 @@ impl ProcessController {
         })?;
 
         let pid = content
+            .trim()
             .parse::<Pid>()
             .map_err(|_| InvalidPidFileSnafu.build())?;
 

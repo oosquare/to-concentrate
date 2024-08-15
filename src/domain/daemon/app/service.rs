@@ -53,8 +53,14 @@ impl QueryService {
 #[async_trait::async_trait]
 impl QueryPort for QueryService {
     async fn query(&self) -> QueryResponse {
-        let WorkerQueryResponse { total, past, stage } = self.worker.query().await;
+        let WorkerQueryResponse {
+            current,
+            total,
+            past,
+            stage,
+        } = self.worker.query().await;
         QueryResponse {
+            current,
             stage: stage.to_string(),
             total,
             remaining: total - past,

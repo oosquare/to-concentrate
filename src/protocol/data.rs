@@ -27,6 +27,7 @@ pub enum Response {
     Pause,
     Resume,
     Query {
+        current: String,
         stage: String,
         total: Duration,
         remaining: Duration,
@@ -44,6 +45,7 @@ mod tests {
         let text = serde_json::json!({
             "type": "Response",
             "method": "Query",
+            "current": "Running",
             "stage": "Preparation",
             "total": {
                 "secs": 20,
@@ -60,6 +62,7 @@ mod tests {
         });
 
         let data = Protocol::Response(Response::Query {
+            current: "Running".to_owned(),
             stage: "Preparation".to_owned(),
             total: Duration::from_secs(20),
             remaining: Duration::from_secs(15),

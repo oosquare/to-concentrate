@@ -14,6 +14,8 @@ pub enum Command {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct QueryArguments {
+    /// Show the timer's current status
+    pub current: bool,
     /// Show the current stage's name
     pub stage: bool,
     /// Show the total duration in the current stage

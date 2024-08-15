@@ -146,6 +146,7 @@ impl RunningState {
         responder: Sender<QueryResponse>,
     ) -> WorkerStateInner {
         let _ = responder.send(QueryResponse {
+            current: "Running".to_owned(),
             total: *context.config.duration(self.stage).inner(),
             past: self.past + (Instant::now() - self.start),
             stage: self.stage,
@@ -211,6 +212,7 @@ impl PausedState {
         responder: Sender<QueryResponse>,
     ) -> WorkerStateInner {
         let _ = responder.send(QueryResponse {
+            current: "Paused".to_owned(),
             total: *context.config.duration(self.stage).inner(),
             past: self.past,
             stage: self.stage,

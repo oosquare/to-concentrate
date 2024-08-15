@@ -30,6 +30,9 @@ pub enum Command {
     Resume,
     /// Query the timer's status. Show all information if no flag is specified.
     Query {
+        /// Show the timer's current status
+        #[arg(short, long)]
+        current: bool,
         /// Show the current stage's name
         #[arg(short, long)]
         stage: bool,
@@ -54,11 +57,13 @@ impl From<Command> for ClientCommand {
             Command::Pause => Self::Pause,
             Command::Resume => Self::Resume,
             Command::Query {
+                current,
                 stage,
                 total,
                 remaining,
                 past,
             } => Self::Query(QueryArguments {
+                current,
                 stage,
                 total,
                 remaining,

@@ -27,6 +27,7 @@ pub trait QueryPort: Send + Sync + 'static {
 /// The state of this daemon.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct QueryResponse {
+    pub current: String,
     pub stage: String,
     pub total: Duration,
     pub remaining: Duration,

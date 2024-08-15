@@ -192,6 +192,7 @@ mod tests {
 
     fn new_frame() -> (Frame, BytesMut) {
         let frame: Frame = Protocol::Response(Response::Query {
+            current: "Running".to_owned(),
             stage: "Preparation".to_owned(),
             total: Duration::from_secs(20),
             remaining: Duration::from_secs(15),

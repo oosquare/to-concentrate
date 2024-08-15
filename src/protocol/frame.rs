@@ -116,6 +116,7 @@ mod tests {
             {
                 "type": "Response",
                 "method": "Query",
+                "current": "Running",
                 "stage": "Preparation",
                 "total": {
                     "secs": 20,
@@ -140,6 +141,7 @@ mod tests {
         let (actual, offset) = Frame::parse(&mut raw).unwrap();
 
         let expected = Protocol::Response(Response::Query {
+            current: "Running".to_owned(),
             stage: "Preparation".to_owned(),
             total: Duration::from_secs(20),
             remaining: Duration::from_secs(15),
