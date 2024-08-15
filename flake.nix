@@ -21,9 +21,7 @@
           inherit system;
           overlays = [ (import inputs.rust-overlay) ];
         };
-        rust = pkgs.rust-bin.stable.latest.default.override {
-          extensions = [ "rust-analyzer" "rust-src" ]; 
-        };
+        rust = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
       in {
         packages.to-concentrate = (pkgs.callPackage ./pkgs/to-concentrate {}).override {
           rustPlatform = pkgs.makeRustPlatform {
