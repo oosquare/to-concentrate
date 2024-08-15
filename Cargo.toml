@@ -1,8 +1,10 @@
 [package]
 name = "to-concentrate"
 version = "0.1.0"
+rust-version = "1.80.0"
 edition = "2021"
 description = "A notifier daemon written in Rust which makes practical use of the tomato clock method"
+license = "GPL-3.0-or-later"
 
 [dependencies]
 async-trait = "0.1.81"
