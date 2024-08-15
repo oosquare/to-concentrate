@@ -18,7 +18,7 @@ use crate::cli::Arguments;
 
 const APP_NAME: &str = "to-concentrate";
 
-pub struct EnvironmentPath {
+struct EnvironmentPath {
     socket: PathBuf,
     pid: PathBuf,
 }

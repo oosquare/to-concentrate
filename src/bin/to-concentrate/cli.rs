@@ -1,15 +1,16 @@
 use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
+use to_concentrate::client::app::{Command as ClientCommand, QueryArguments};
 use tracing::Level;
 
 #[derive(Debug, Parser)]
 pub struct Arguments {
     /// Path to a custom configuration file
     #[arg(short, long)]
-    config: Option<PathBuf>,
+    pub config: Option<PathBuf>,
     #[command(subcommand)]
-    command: Option<Command>,
+    pub command: Command,
 }
 
 #[derive(Debug, Subcommand)]
@@ -41,4 +42,26 @@ pub enum Command {
     },
     /// Skip the current stage
     Skip,
+}
+
+impl From<Command> for ClientCommand {
+    fn from(value: Command) -> Self {
+        match value {
+            Command::Init { .. } => Self::Init,
+            Command::Pause => Self::Pause,
+            Command::Resume => Self::Resume,
+            Command::Query {
+                stage,
+                total,
+                remaining,
+                past,
+            } => Self::Query(QueryArguments {
+                stage,
+                total,
+                remaining,
+                past,
+            }),
+            Command::Skip => Self::Skip,
+        }
+    }
 }

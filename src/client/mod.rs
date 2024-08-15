@@ -1,5 +1,5 @@
+pub mod app;
 pub mod outbound;
 
-mod app;
-
 pub use crate::daemon::config;
+pub use app::Client;
