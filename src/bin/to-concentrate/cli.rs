@@ -5,6 +5,7 @@ use to_concentrate::client::app::{Command as ClientCommand, QueryArguments};
 use tracing::Level;
 
 #[derive(Debug, Parser)]
+#[command(version, about, long_about = None)]
 pub struct Arguments {
     /// Path to a custom configuration file
     #[arg(short, long)]
@@ -71,5 +72,17 @@ impl From<Command> for ClientCommand {
             }),
             Command::Skip => Self::Skip,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use clap::CommandFactory;
+
+    #[test]
+    fn arguments_parse() {
+        Arguments::command().debug_assert();
     }
 }

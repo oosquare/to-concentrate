@@ -6,7 +6,7 @@ pub use crate::domain::daemon::inbound::QueryResponse;
 
 /// A public port for launching and initializing a daemon.
 #[async_trait::async_trait]
-pub trait InitPort {
+pub trait InitPort: Send + Sync + 'static {
     /// Do the initialization operation.
     ///
     /// # Errors
@@ -34,7 +34,7 @@ pub enum InitDaemonError {
 
 /// A public port for requesting the daemon to suspend the tomato timer.
 #[async_trait::async_trait]
-pub trait PausePort {
+pub trait PausePort: Send + Sync + 'static {
     /// Do the pause operation.
     ///
     /// # Errors
@@ -45,7 +45,7 @@ pub trait PausePort {
 
 /// A public port for requesting the daemon to resume the tomato timer.
 #[async_trait::async_trait]
-pub trait ResumePort {
+pub trait ResumePort: Send + Sync + 'static {
     /// Do the resume operation.
     ///
     /// # Errors
@@ -63,7 +63,7 @@ pub trait QueryPort: Send + Sync + 'static {
 
 /// A public port for requesting the daemon to skip the current stage.
 #[async_trait::async_trait]
-pub trait SkipPort {
+pub trait SkipPort: Send + Sync + 'static {
     /// Do the skip operation.
     ///
     /// # Errors

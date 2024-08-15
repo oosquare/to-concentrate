@@ -69,7 +69,7 @@ fn core(args: &Arguments, env_path: EnvironmentPath) -> Arc<ApplicationCore> {
     };
 
     let verbosity = match &args.command {
-        Command::Init { verbosity, .. } => verbosity.clone(),
+        Command::Init { verbosity, .. } => *verbosity,
         _ => Level::INFO,
     };
 

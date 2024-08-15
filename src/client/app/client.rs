@@ -82,17 +82,17 @@ impl Client {
         }
 
         if enable_all || args.total {
-            let value = format!("{}s", response.total.as_secs().to_string());
+            let value = format!("{}s", response.total.as_secs());
             outputs.push(("Total".to_owned(), value));
         }
 
         if enable_all || args.remaining {
-            let value = format!("{}s", response.remaining.as_secs().to_string());
+            let value = format!("{}s", response.remaining.as_secs());
             outputs.push(("Remaining".to_owned(), value));
         }
 
         if enable_all || args.past {
-            let value = format!("{}s", response.past.as_secs().to_string());
+            let value = format!("{}s", response.past.as_secs());
             outputs.push(("Past".to_owned(), value));
         }
 

@@ -4,6 +4,7 @@ use clap::Parser;
 use tracing::Level;
 
 #[derive(Debug, Parser)]
+#[command(version, about, long_about = None)]
 pub struct Arguments {
     /// Path to a custom configuration file
     #[arg(short, long)]
