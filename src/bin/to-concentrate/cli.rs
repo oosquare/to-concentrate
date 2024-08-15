@@ -17,6 +17,9 @@ pub struct Arguments {
 pub enum Command {
     /// Launch and initialize a daemon process
     Init {
+        /// Path to the daemon executable
+        #[arg(short, long)]
+        executable: Option<PathBuf>,
         /// Maximum logging level the subscriber should use
         #[arg(short, long, default_value_t = Level::INFO)]
         verbosity: Level,

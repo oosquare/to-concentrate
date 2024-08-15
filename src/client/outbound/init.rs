@@ -1,4 +1,5 @@
 use std::path::PathBuf;
+use std::process::Stdio;
 
 use sysinfo::System;
 use tokio::process::Command;
@@ -9,6 +10,7 @@ use crate::domain::client::outbound::{InitDaemonError, InitPort};
 
 #[derive(Debug)]
 pub struct InitService {
+    executable: Option<PathBuf>,
     pid_file: PathBuf,
     daemon_name: String,
     config: Option<PathBuf>,
@@ -17,12 +19,14 @@ pub struct InitService {
 
 impl InitService {
     pub fn new(
+        executable: Option<PathBuf>,
         pid_file: PathBuf,
         daemon_name: String,
         config: Option<PathBuf>,
         verbosity: Level,
     ) -> Self {
         Self {
+            executable,
             pid_file,
             daemon_name,
             config,
@@ -48,7 +52,16 @@ impl InitPort for InitService {
     async fn init(&self) -> Result<(), InitDaemonError> {
         self.detect_instance()?;
 
-        let mut command = Command::new(&self.daemon_name);
+        let mut command = match &self.executable {
+            Some(executable) => Command::new(executable),
+            None => Command::new(&self.daemon_name),
+        };
+
+        command
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::piped());
+
         command.arg("--verbosity").arg(self.verbosity.to_string());
         command.arg("--daemonize");
 

@@ -20,6 +20,8 @@ pub trait InitPort {
 #[derive(Debug, Snafu)]
 #[non_exhaustive]
 pub enum InitDaemonError {
+    #[snafu(display("Could not find daemon executable"))]
+    NotFound,
     #[snafu(display("Daemon is already running"))]
     AlreadyRunning,
     #[snafu(whatever, display("Initialization failed: {message}"))]

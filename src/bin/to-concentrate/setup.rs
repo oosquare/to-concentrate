@@ -63,14 +63,20 @@ fn environment(args: &Arguments) -> Result<EnvironmentPath, Whatever> {
 }
 
 fn core(args: &Arguments, env_path: EnvironmentPath) -> Arc<ApplicationCore> {
-    let verbosity = match args.command {
-        Command::Init { verbosity } => verbosity,
+    let executable = match &args.command {
+        Command::Init { executable, .. } => executable.clone(),
+        _ => None,
+    };
+
+    let verbosity = match &args.command {
+        Command::Init { verbosity, .. } => verbosity.clone(),
         _ => Level::INFO,
     };
 
     let connector: Arc<dyn Connector> = Arc::new(UnixConnector::new(env_path.socket));
 
     let init_port = Arc::new(InitService::new(
+        executable,
         env_path.pid.to_path_buf(),
         DAEMON_NAME.to_owned(),
         args.config.clone(),
