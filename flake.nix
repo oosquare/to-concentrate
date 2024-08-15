@@ -25,7 +25,12 @@
           extensions = [ "rust-analyzer" "rust-src" ]; 
         };
       in {
-        packages.to-concentrate = pkgs.callPackage ./pkgs/to-concentrate {};
+        packages.to-concentrate = (pkgs.callPackage ./pkgs/to-concentrate {}).override {
+          rustPlatform = pkgs.makeRustPlatform {
+            cargo = rust;
+            rustc = rust;
+          };
+        };
         packages.default = self'.packages.to-concentrate;
 
         devShells.default = let

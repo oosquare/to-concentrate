@@ -12,7 +12,7 @@ rustPlatform.buildRustPackage {
     description = "A notifier daemon written in Rust which makes practical use of the tomato clock method";
     homepage = "";
     license = lib.licenses.gpl3Plus;
-    maintainers = with lib.maintainers; [];
+    maintainers = with lib.maintainers; [ oo-infty ];
     mainProgram = "to-concentrate";
     platforms = lib.platforms.unix;
   };
