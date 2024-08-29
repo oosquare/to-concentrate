@@ -22,8 +22,8 @@ jobs:
       - name: Cache Nix Store
         uses: nix-community/cache-nix-action@v5.2.1
         with:
-          primary-key: nix-${{ runner.os }}-${{ hashFiles('**/*.nix') }}
-          restore-prefixes-first-match: nix-${{ runner.os }}-
+          primary-key: nix-test-${{ runner.os }}-${{ hashFiles('**/*.nix') }}
+          restore-prefixes-first-match: nix-test-${{ runner.os }}-
           gc-max-store-size-linux: 1073741824
           purge: true
           purge-prefixes: cache-${{ runner.os }}-
