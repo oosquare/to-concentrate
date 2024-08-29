@@ -23,12 +23,7 @@
         };
         rust = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
       in {
-        packages.to-concentrate = (pkgs.callPackage ./pkgs/to-concentrate {}).override {
-          rustPlatform = pkgs.makeRustPlatform {
-            cargo = rust;
-            rustc = rust;
-          };
-        };
+        packages.to-concentrate = pkgs.callPackage ./pkgs/to-concentrate {};
         packages.default = self'.packages.to-concentrate;
 
         devShells.default = let
