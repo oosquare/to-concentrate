@@ -44,5 +44,10 @@
             buildInputs = [ rust ];
           };
       };
+
+      flake = {
+        homeManagerModules.to-concentrate = import ./modules/home-manager/to-concentrate;
+        homeManagerModules.default = self.homeManagerModules.to-concentrate;
+      };
     };
 }
