@@ -11,7 +11,7 @@
 The installation requires that Nix Flake is enabled. Run the command below to install programs to your Nix profile:
 
 ```bash
-nix profile install github:oo-infty/to-concentrate#
+nix profile install github:oosquare/to-concentrate#
 ```
 
 If you're using NixOS, you can alternatively use the following `flake.nix`:
@@ -24,7 +24,7 @@ If you're using NixOS, you can alternatively use the following `flake.nix`:
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
     to-concentrate = {
-      url = "github:oo-infty/to-concentrate";
+      url = "github:oosquare/to-concentrate";
       inputs.nixpkgs.follows = nixpkgs;
     };
   };
@@ -50,7 +50,7 @@ If you're using NixOS, you can alternatively use the following `flake.nix`:
 #### Source
 
 ```bash
-git clone https://github.com/oo-infty/to-concentrate.git
+git clone https://github.com/oosquare/to-concentrate.git
 cd to-concentrate
 cargo install --path .
 ```
